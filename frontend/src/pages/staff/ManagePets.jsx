@@ -36,6 +36,9 @@ const ManagePets = () => {
   const [open, setOpen] = useState(false);
   const [editingPet, setEditingPet] = useState(null);
 
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+
   const initialFormData = {
     name: "",
     species: "dog",
@@ -62,7 +65,7 @@ const ManagePets = () => {
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Failed to load pets. Please try again."
+          "Failed to load pets. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -83,6 +86,8 @@ const ManagePets = () => {
   const handleAddOpen = () => {
     setEditingPet(null);
     setFormData(initialFormData);
+    setImage(null);
+    setImagePreview("");
     setError("");
     setSuccess("");
     setOpen(true);
@@ -104,6 +109,12 @@ const ManagePets = () => {
       status: pet.status,
     });
 
+    setImage(null);
+
+    setImagePreview(
+      pet.image ? `http://localhost:5000/uploads/${pet.image}` : "",
+    );
+
     setError("");
     setSuccess("");
     setOpen(true);
@@ -113,6 +124,19 @@ const ManagePets = () => {
     setOpen(false);
     setEditingPet(null);
     setFormData(initialFormData);
+    setImage(null);
+    setImagePreview("");
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -122,19 +146,31 @@ const ManagePets = () => {
     setSuccess("");
 
     try {
-      const petData = {
-        ...formData,
-        age: Number(formData.age),
-        adoptionFee: Number(formData.adoptionFee),
-      };
+      const petData = new FormData();
+
+      petData.append("name", formData.name);
+      petData.append("species", formData.species);
+      petData.append("breed", formData.breed);
+      petData.append("age", formData.age);
+      petData.append("gender", formData.gender);
+      petData.append("description", formData.description);
+      petData.append("healthStatus", formData.healthStatus);
+      petData.append("vaccinationStatus", formData.vaccinationStatus);
+      petData.append("adoptionFee", formData.adoptionFee);
+
+      if (editingPet) {
+        petData.append("status", formData.status);
+      }
+
+      if (image) {
+        petData.append("image", image);
+      }
 
       if (editingPet) {
         await updatePet(editingPet._id, petData);
-
         setSuccess("Pet updated successfully.");
       } else {
         await addPet(petData);
-
         setSuccess("Pet added successfully.");
       }
 
@@ -143,14 +179,14 @@ const ManagePets = () => {
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Failed to save pet. Please try again."
+          "Failed to save pet. Please try again.",
       );
     }
   };
 
   const handleDelete = async (petId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this pet?"
+      "Are you sure you want to delete this pet?",
     );
 
     if (!confirmed) {
@@ -163,16 +199,11 @@ const ManagePets = () => {
 
       await deletePet(petId);
 
-      setPets((currentPets) =>
-        currentPets.filter((pet) => pet._id !== petId)
-      );
+      setPets((currentPets) => currentPets.filter((pet) => pet._id !== petId));
 
       setSuccess("Pet deleted successfully.");
     } catch (error) {
-      setError(
-        error.response?.data?.message ||
-          "Failed to delete pet."
-      );
+      setError(error.response?.data?.message || "Failed to delete pet.");
     }
   };
 
@@ -282,8 +313,22 @@ const ManagePets = () => {
                     borderRadius: 3,
                     border: "1px solid",
                     borderColor: "divider",
+                    overflow: "hidden",
                   }}
                 >
+                  {pet.image && (
+                    <Box
+                      component="img"
+                      src={`http://localhost:5000/uploads/${pet.image}`}
+                      alt={pet.name}
+                      sx={{
+                        width: "100%",
+                        height: 220,
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+
                   <CardContent>
                     <Typography
                       variant="h6"
@@ -318,8 +363,7 @@ const ManagePets = () => {
                       </Typography>
 
                       <Typography color="text.secondary">
-                        <strong>Vaccination:</strong>{" "}
-                        {pet.vaccinationStatus}
+                        <strong>Vaccination:</strong> {pet.vaccinationStatus}
                       </Typography>
 
                       <Typography color="text.secondary">
@@ -410,19 +454,9 @@ const ManagePets = () => {
           </Grid>
         )}
 
-        <Dialog
-          open={open}
-          onClose={handleClose}
-          fullWidth
-          maxWidth="sm"
-        >
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-          >
-            <DialogTitle>
-              {editingPet ? "Edit Pet" : "Add Pet"}
-            </DialogTitle>
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+          <Box component="form" onSubmit={handleSubmit}>
+            <DialogTitle>{editingPet ? "Edit Pet" : "Add Pet"}</DialogTitle>
 
             <DialogContent>
               <Stack
@@ -489,6 +523,38 @@ const ManagePets = () => {
                   <MenuItem value="female">Female</MenuItem>
                 </TextField>
 
+                <Button
+                  variant="outlined"
+                  component="label"
+                  sx={{
+                    textTransform: "none",
+                    py: 1.4,
+                  }}
+                >
+                  {image ? image.name : "Choose Pet Image (Optional)"}
+
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageChange}
+                  />
+                </Button>
+
+                {imagePreview && (
+                  <Box
+                    component="img"
+                    src={imagePreview}
+                    alt="Pet preview"
+                    sx={{
+                      width: "100%",
+                      maxHeight: 250,
+                      objectFit: "cover",
+                      borderRadius: 2,
+                    }}
+                  />
+                )}
+
                 <TextField
                   label="Description"
                   name="description"
@@ -518,17 +584,11 @@ const ManagePets = () => {
                   onChange={handleChange}
                   fullWidth
                 >
-                  <MenuItem value="vaccinated">
-                    Vaccinated
-                  </MenuItem>
+                  <MenuItem value="vaccinated">Vaccinated</MenuItem>
 
-                  <MenuItem value="not vaccinated">
-                    Not Vaccinated
-                  </MenuItem>
+                  <MenuItem value="not vaccinated">Not Vaccinated</MenuItem>
 
-                  <MenuItem value="partial">
-                    Partial
-                  </MenuItem>
+                  <MenuItem value="partial">Partial</MenuItem>
                 </TextField>
 
                 <TextField
@@ -553,17 +613,11 @@ const ManagePets = () => {
                     onChange={handleChange}
                     fullWidth
                   >
-                    <MenuItem value="available">
-                      Available
-                    </MenuItem>
+                    <MenuItem value="available">Available</MenuItem>
 
-                    <MenuItem value="pending">
-                      Pending
-                    </MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
 
-                    <MenuItem value="adopted">
-                      Adopted
-                    </MenuItem>
+                    <MenuItem value="adopted">Adopted</MenuItem>
                   </TextField>
                 )}
               </Stack>

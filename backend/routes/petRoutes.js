@@ -10,10 +10,13 @@ const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
+const upload = require("../middleware/uploadMiddleware");
+
 router.post(
   "/",
   protect,
   authorizeRoles("admin", "staff"),
+  upload.single("image"),
   addPet
 );
 
@@ -25,6 +28,7 @@ router.patch(
   "/:id",
   protect,
   authorizeRoles("admin", "staff"),
+  upload.single("image"),
   updatePet
 );
 

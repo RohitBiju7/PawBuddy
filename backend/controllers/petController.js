@@ -1,5 +1,8 @@
 const Pet = require("../models/petModel");
 
+const fs = require("fs");
+const path = require("path");
+
 const addPet = async (req, res) => {
   try {
     const {
@@ -11,7 +14,7 @@ const addPet = async (req, res) => {
       description,
       healthStatus,
       vaccinationStatus,
-      adoptionFee
+      adoptionFee,
     } = req.body;
 
     if (
@@ -25,7 +28,7 @@ const addPet = async (req, res) => {
       adoptionFee === undefined
     ) {
       return res.status(400).json({
-        message: "Please provide all required pet details"
+        message: "Please provide all required pet details",
       });
     }
 
@@ -39,17 +42,18 @@ const addPet = async (req, res) => {
       healthStatus,
       vaccinationStatus,
       adoptionFee,
-      createdBy: req.user._id
+      image: req.file ? req.file.filename : null,
+      createdBy: req.user._id,
     });
 
     res.status(201).json({
       message: "Pet added successfully",
-      pet
+      pet,
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -76,19 +80,19 @@ const getAllPets = async (req, res) => {
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
-        { breed: { $regex: search, $options: "i" } }
+        { breed: { $regex: search, $options: "i" } },
       ];
     }
 
     const pets = await Pet.find(filter);
 
     res.status(200).json({
-      pets
+      pets,
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -100,17 +104,17 @@ const getPetById = async (req, res) => {
 
     if (!pet) {
       return res.status(404).json({
-        message: "Pet not found"
+        message: "Pet not found",
       });
     }
 
     res.status(200).json({
-      pet
+      pet,
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -122,11 +126,11 @@ const updatePet = async (req, res) => {
 
     if (!pet) {
       return res.status(404).json({
-        message: "Pet not found"
+        message: "Pet not found",
       });
     }
 
-    const allowedFields = [ 
+    const allowedFields = [
       "name",
       "species",
       "breed",
@@ -136,7 +140,7 @@ const updatePet = async (req, res) => {
       "healthStatus",
       "vaccinationStatus",
       "adoptionFee",
-      "status"
+      "status",
     ];
 
     allowedFields.forEach((field) => {
@@ -145,16 +149,28 @@ const updatePet = async (req, res) => {
       }
     });
 
+    if (req.file) {
+      if (pet.image) {
+        const oldImagePath = path.join(__dirname, "..", "uploads", pet.image);
+
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
+      pet.image = req.file.filename;
+    }
+
     await pet.save();
 
     res.status(200).json({
       message: "Pet updated successfully",
-      pet
+      pet,
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -166,19 +182,27 @@ const deletePet = async (req, res) => {
 
     if (!pet) {
       return res.status(404).json({
-        message: "Pet not found"
+        message: "Pet not found",
       });
+    }
+
+    if (pet.image) {
+      const imagePath = path.join(__dirname, "..", "uploads", pet.image);
+
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
     }
 
     await pet.deleteOne();
 
     res.status(200).json({
-      message: "Pet deleted successfully"
+      message: "Pet deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -188,5 +212,5 @@ module.exports = {
   getAllPets,
   getPetById,
   updatePet,
-  deletePet
+  deletePet,
 };

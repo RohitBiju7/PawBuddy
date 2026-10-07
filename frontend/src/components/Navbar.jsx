@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 
+import pawBuddyLogo from "../assets/pawbuddy-logo.png";
+
 const Navbar = () => {
   const navigate = useNavigate();
 
@@ -56,18 +58,29 @@ const Navbar = () => {
             justifyContent: "space-between",
           }}
         >
-          <Typography
+          <Box
             component={Link}
             to="/"
-            variant="h5"
             sx={{
-              fontWeight: 700,
-              color: "primary.main",
+              display: "flex",
+              alignItems: "center",
               textDecoration: "none",
             }}
           >
-            PawBuddy
-          </Typography>
+            <Box
+              component="img"
+              src={pawBuddyLogo}
+              alt="PawBuddy Logo"
+              sx={{
+                height: {
+                  xs: 42,
+                  sm: 48,
+                },
+                width: "auto",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
 
           <Box
             sx={{
@@ -99,11 +112,7 @@ const Navbar = () => {
                       Admin Dashboard
                     </Button>
 
-                    <Button
-                      component={Link}
-                      to="/admin/users"
-                      color="inherit"
-                    >
+                    <Button component={Link} to="/admin/users" color="inherit">
                       Users
                     </Button>
                   </>
@@ -115,11 +124,7 @@ const Navbar = () => {
                       Staff Dashboard
                     </Button>
 
-                    <Button
-                      component={Link}
-                      to="/staff/pets"
-                      color="inherit"
-                    >
+                    <Button component={Link} to="/staff/pets" color="inherit">
                       Manage Pets
                     </Button>
                   </>
@@ -190,19 +195,11 @@ const Navbar = () => {
                 horizontal: "right",
               }}
             >
-              <MenuItem
-                component={Link}
-                to="/"
-                onClick={handleMenuClose}
-              >
+              <MenuItem component={Link} to="/" onClick={handleMenuClose}>
                 Home
               </MenuItem>
 
-              <MenuItem
-                component={Link}
-                to="/pets"
-                onClick={handleMenuClose}
-              >
+              <MenuItem component={Link} to="/pets" onClick={handleMenuClose}>
                 Pets
               </MenuItem>
 
@@ -256,9 +253,7 @@ const Navbar = () => {
                     </>
                   )}
 
-                  <MenuItem onClick={handleLogout}>
-                    Logout
-                  </MenuItem>
+                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
                 </>
               )}
 
