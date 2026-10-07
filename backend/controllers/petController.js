@@ -126,7 +126,7 @@ const updatePet = async (req, res) => {
       });
     }
 
-    const allowedFields = [
+    const allowedFields = [ 
       "name",
       "species",
       "breed",
