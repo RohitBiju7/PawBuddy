@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../services/axiosInterceptor";
 
+import {
+  Box,
+  Paper,
+  Typography,
+  Alert,
+  Stack,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
+
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
@@ -23,159 +33,213 @@ const Profile = () => {
 
   if (error) {
     return (
-      <div
-        style={{
-          minHeight: "80vh",
+      <Box
+        sx={{
+          minHeight: "calc(100vh - 70px)",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#F7FAF9",
+          backgroundColor: "background.default",
+          px: 2,
         }}
       >
-        <div
-          style={{
-            backgroundColor: "#FDECEA",
-            color: "#C0392B",
-            padding: "16px 20px",
-            borderRadius: "10px",
+        <Alert
+          severity="error"
+          sx={{
+            width: "100%",
+            maxWidth: 600,
           }}
         >
           {error}
-        </div>
-      </div>
+        </Alert>
+      </Box>
     );
   }
 
   if (!user) {
     return (
-      <div
-        style={{
-          minHeight: "80vh",
+      <Box
+        sx={{
+          minHeight: "calc(100vh - 70px)",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#F7FAF9",
-          color: "#2F7D6D",
-          fontWeight: "600",
+          backgroundColor: "background.default",
         }}
       >
-        Loading profile...
-      </div>
+        <Stack
+          spacing={2}
+          alignItems="center"
+        >
+          <CircularProgress color="primary" />
+
+          <Typography
+            sx={{
+              color: "primary.main",
+              fontWeight: 600,
+            }}
+          >
+            Loading profile...
+          </Typography>
+        </Stack>
+      </Box>
     );
   }
 
   return (
-    <div
-      style={{
-        minHeight: "80vh",
-        backgroundColor: "#F7FAF9",
-        padding: "40px 20px",
+    <Box
+      sx={{
+        minHeight: "calc(100vh - 70px)",
+        backgroundColor: "background.default",
+        px: 2,
+        py: {
+          xs: 3,
+          sm: 5,
+        },
       }}
     >
-      <div
-        style={{
-          maxWidth: "700px",
-          margin: "0 auto",
-          backgroundColor: "#FFFFFF",
-          padding: "32px",
-          borderRadius: "16px",
-          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.08)",
+      <Paper
+        elevation={3}
+        sx={{
+          width: "100%",
+          maxWidth: 700,
+          mx: "auto",
+          p: {
+            xs: 3,
+            sm: 4,
+          },
+          borderRadius: 3,
         }}
       >
-        <div
-          style={{
-            marginBottom: "28px",
+        <Box
+          sx={{
+            mb: 4,
           }}
         >
-          <h1
-            style={{
-              color: "#2F7D6D",
-              marginBottom: "8px",
+          <Typography
+            variant="h4"
+            sx={{
+              color: "primary.main",
+              fontWeight: 700,
+              mb: 1,
             }}
           >
             My Profile
-          </h1>
+          </Typography>
 
-          <p
-            style={{
-              color: "#667570",
-              margin: 0,
+          <Typography
+            variant="body1"
+            sx={{
+              color: "text.secondary",
             }}
           >
             View your PawBuddy account details.
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "18px",
-          }}
-        >
-          <div>
-            <strong style={{ color: "#24332F" }}>Name:</strong>
-            <div style={{ color: "#667570", marginTop: "4px" }}>
-              {user.name}
-            </div>
-          </div>
-
-          <div>
-            <strong style={{ color: "#24332F" }}>Email:</strong>
-            <div style={{ color: "#667570", marginTop: "4px" }}>
-              {user.email}
-            </div>
-          </div>
-
-          {user.phone && (
-            <div>
-              <strong style={{ color: "#24332F" }}>Phone:</strong>
-              <div style={{ color: "#667570", marginTop: "4px" }}>
-                {user.phone}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <strong style={{ color: "#24332F" }}>Role:</strong>
-            <div
-              style={{
-                display: "inline-block",
-                marginTop: "6px",
-                backgroundColor: "#DCEFE8",
-                color: "#2F7D6D",
-                padding: "6px 12px",
-                borderRadius: "20px",
-                fontWeight: "600",
-                textTransform: "capitalize",
+        <Stack spacing={3}>
+          <Box>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                mb: 0.5,
               }}
             >
-              {user.role}
-            </div>
-          </div>
+              Name
+            </Typography>
 
-          {user.isActive !== undefined && (
-            <div>
-              <strong style={{ color: "#24332F" }}>Account Status:</strong>
+            <Typography color="text.secondary">
+              {user.name}
+            </Typography>
+          </Box>
 
-              <div
-                style={{
-                  display: "inline-block",
-                  marginTop: "6px",
-                  backgroundColor: user.isActive ? "#E8F5EF" : "#FDECEA",
-                  color: user.isActive ? "#2F7D6D" : "#C0392B",
-                  padding: "6px 12px",
-                  borderRadius: "20px",
-                  fontWeight: "600",
+          <Box>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                mb: 0.5,
+              }}
+            >
+              Email
+            </Typography>
+
+            <Typography
+              color="text.secondary"
+              sx={{
+                wordBreak: "break-word",
+              }}
+            >
+              {user.email}
+            </Typography>
+          </Box>
+
+          {user.phone && (
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 700,
+                  mb: 0.5,
                 }}
               >
-                {user.isActive ? "Active" : "Inactive"}
-              </div>
-            </div>
+                Phone
+              </Typography>
+
+              <Typography color="text.secondary">
+                {user.phone}
+              </Typography>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+
+          <Box>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                mb: 1,
+              }}
+            >
+              Role
+            </Typography>
+
+            <Chip
+              label={user.role}
+              sx={{
+                backgroundColor: "#DCEFE8",
+                color: "primary.main",
+                fontWeight: 600,
+                textTransform: "capitalize",
+              }}
+            />
+          </Box>
+
+          {user.isActive !== undefined && (
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 700,
+                  mb: 1,
+                }}
+              >
+                Account Status
+              </Typography>
+
+              <Chip
+                label={user.isActive ? "Active" : "Inactive"}
+                color={user.isActive ? "success" : "error"}
+                variant="outlined"
+                sx={{
+                  fontWeight: 600,
+                }}
+              />
+            </Box>
+          )}
+        </Stack>
+      </Paper>
+    </Box>
   );
 };
 

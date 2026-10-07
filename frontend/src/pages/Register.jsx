@@ -2,6 +2,16 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../services/axiosInterceptor";
 
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Stack,
+} from "@mui/material";
+
 const Register = () => {
   const navigate = useNavigate();
 
@@ -50,224 +60,170 @@ const Register = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
+    <Box
+      sx={{
+        minHeight: "calc(100vh - 70px)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#F7FAF9",
-        padding: "20px",
+        backgroundColor: "background.default",
+        px: 2,
+        py: 4,
       }}
     >
-      <div
-        style={{
+      <Paper
+        elevation={3}
+        sx={{
           width: "100%",
-          maxWidth: "460px",
-          backgroundColor: "#FFFFFF",
-          padding: "40px",
-          borderRadius: "16px",
-          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.08)",
+          maxWidth: 460,
+          p: {
+            xs: 3,
+            sm: 4,
+          },
+          borderRadius: 3,
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <h1
-            style={{
-              color: "#2F7D6D",
-              marginBottom: "8px",
+        <Box
+          sx={{
+            textAlign: "center",
+            mb: 3,
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{
+              color: "primary.main",
+              fontWeight: 700,
+              mb: 1,
             }}
           >
             Create Account
-          </h1>
+          </Typography>
 
-          <p
-            style={{
-              color: "#667570",
-              margin: 0,
+          <Typography
+            variant="body1"
+            sx={{
+              color: "text.secondary",
             }}
           >
             Join PawBuddy and find your perfect companion.
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
         {error && (
-          <div
-            style={{
-              backgroundColor: "#FDECEA",
-              color: "#C0392B",
-              padding: "12px",
-              borderRadius: "8px",
-              marginBottom: "20px",
+          <Alert
+            severity="error"
+            sx={{
+              mb: 2,
             }}
           >
             {error}
-          </div>
+          </Alert>
         )}
 
         {success && (
-          <div
-            style={{
-              backgroundColor: "#E8F5EF",
-              color: "#2F7D6D",
-              padding: "12px",
-              borderRadius: "8px",
-              marginBottom: "20px",
+          <Alert
+            severity="success"
+            sx={{
+              mb: 2,
             }}
           >
             {success}
-          </div>
+          </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "18px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "#24332F",
-              }}
-            >
-              Name
-            </label>
-
-            <input
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack spacing={2.5}>
+            <TextField
+              label="Name"
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
               placeholder="Enter your name"
               required
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #DCE7E3",
-                borderRadius: "8px",
-                outline: "none",
-              }}
+              fullWidth
             />
-          </div>
 
-          <div style={{ marginBottom: "18px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "#24332F",
-              }}
-            >
-              Email
-            </label>
-
-            <input
+            <TextField
+              label="Email"
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
               required
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #DCE7E3",
-                borderRadius: "8px",
-                outline: "none",
-              }}
+              fullWidth
             />
-          </div>
 
-          <div style={{ marginBottom: "18px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "#24332F",
-              }}
-            >
-              Phone
-            </label>
-
-            <input
+            <TextField
+              label="Phone"
               type="text"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
               placeholder="Enter your phone number"
               required
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #DCE7E3",
-                borderRadius: "8px",
-                outline: "none",
-              }}
+              fullWidth
             />
-          </div>
 
-          <div style={{ marginBottom: "24px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "#24332F",
-              }}
-            >
-              Password
-            </label>
-
-            <input
+            <TextField
+              label="Password"
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter your password"
               required
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid #DCE7E3",
-                borderRadius: "8px",
-                outline: "none",
-              }}
+              fullWidth
             />
-          </div>
 
-          <button
-            type="submit"
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: "#2F7D6D",
-              color: "#FFFFFF",
-              border: "none",
-              borderRadius: "8px",
-              fontWeight: "600",
-            }}
-          >
-            Register
-          </button>
-        </form>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              sx={{
+                py: 1.4,
+                fontWeight: 600,
+                textTransform: "none",
+              }}
+            >
+              Register
+            </Button>
+          </Stack>
+        </Box>
 
-        <div
-          style={{
+        <Box
+          sx={{
             textAlign: "center",
-            marginTop: "20px",
-            color: "#667570",
+            mt: 2.5,
           }}
         >
-          Already have an account?{" "}
-          <span
+          <Typography
+            component="span"
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            Already have an account?{" "}
+          </Typography>
+
+          <Button
             onClick={() => navigate("/login")}
-            style={{
-              color: "#F28C7A",
-              fontWeight: "600",
-              cursor: "pointer",
+            color="secondary"
+            sx={{
+              fontWeight: 600,
+              textTransform: "none",
+              minWidth: "auto",
+              p: 0,
             }}
           >
             Login
-          </span>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
