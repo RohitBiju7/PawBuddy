@@ -263,22 +263,32 @@ const deletePet = async (req, res) => {
     }
 
     /*
-      A pet with any adoption history should not be deleted.
+      Find adoption applications before deletion.
 
-      This prevents adoption records from pointing
-      to a deleted pet.
+      Later, when Nodemailer is integrated, pending/approved
+      adopters will be notified here before their records
+      are removed.
     */
-    const adoptionExists = await Adoption.exists({
+    const relatedApplications = await Adoption.find({
+      pet: pet._id,
+    }).populate("adopter", "name email");
+
+    /*
+      We keep these for the upcoming email notification step.
+
+      Example:
+      relatedApplications.filter(
+        (application) =>
+          ["pending", "approved"].includes(application.status)
+      );
+    */
+
+    // Delete all adoption records linked to this pet.
+    await Adoption.deleteMany({
       pet: pet._id,
     });
 
-    if (adoptionExists) {
-      return res.status(400).json({
-        message:
-          "This pet cannot be deleted because it has adoption applications associated with it.",
-      });
-    }
-
+    // Delete the pet image from the uploads folder.
     if (pet.image) {
       const imagePath = path.join(
         __dirname,
@@ -292,10 +302,12 @@ const deletePet = async (req, res) => {
       }
     }
 
+    // Permanently delete the pet from MongoDB.
     await pet.deleteOne();
 
     res.status(200).json({
       message: "Pet deleted successfully",
+      affectedApplications: relatedApplications.length,
     });
   } catch (error) {
     res.status(500).json({

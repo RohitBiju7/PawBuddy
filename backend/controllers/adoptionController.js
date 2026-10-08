@@ -118,7 +118,8 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // Once an application has been processed, it cannot be processed again.
+    // Once an application has been processed,
+    // it cannot be approved or rejected again.
     if (adoption.status !== "pending") {
       return res.status(400).json({
         message: "Only pending adoption applications can be updated",
@@ -152,12 +153,8 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     /*
-      An application can only be approved while the pet is still available.
-
-      This prevents cases such as:
-      - approving an application for an already adopted pet
-      - approving another application after one has already been approved
-      - turning a pending pet back into another adoption process
+      An application can only be approved while
+      the pet is still available.
     */
     if (pet.status !== "available") {
       return res.status(400).json({
@@ -169,9 +166,8 @@ const updateApplicationStatus = async (req, res) => {
     /*
       Extra consistency check.
 
-      Normally this should never happen because an approved application
-      changes the pet to pending. This also protects against old or
-      inconsistent database records.
+      Normally this should never happen because approving an
+      application changes the pet to pending.
     */
     const existingApprovedApplication = await Adoption.findOne({
       pet: adoption.pet,
@@ -226,6 +222,71 @@ const updateApplicationStatus = async (req, res) => {
   }
 };
 
+const completeAdoption = async (req, res) => {
+  try {
+    const adoption = await Adoption.findById(req.params.id);
+
+    if (!adoption) {
+      return res.status(404).json({
+        message: "Adoption application not found",
+      });
+    }
+
+    /*
+      Only an approved adoption can be completed.
+
+      pending   -> cannot complete
+      rejected  -> cannot complete
+      completed -> cannot complete again
+      approved  -> allowed
+    */
+    if (adoption.status !== "approved") {
+      return res.status(400).json({
+        message:
+          "Only an approved adoption application can be marked as completed",
+      });
+    }
+
+    const pet = await Pet.findById(adoption.pet);
+
+    if (!pet) {
+      return res.status(404).json({
+        message: "The pet linked to this adoption no longer exists",
+      });
+    }
+
+    /*
+      An approved adoption should have a reserved pet.
+
+      Backend value:
+      pending = Reserved
+    */
+    if (pet.status !== "pending") {
+      return res.status(400).json({
+        message:
+          "This pet is not currently reserved for an approved adoption",
+      });
+    }
+
+    adoption.status = "completed";
+    await adoption.save();
+
+    pet.status = "adopted";
+    await pet.save();
+
+    res.status(200).json({
+      message: "Adoption completed successfully",
+      adoption,
+      pet,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 const cancelApplication = async (req, res) => {
   try {
     const adoption = await Adoption.findById(req.params.id);
@@ -236,13 +297,16 @@ const cancelApplication = async (req, res) => {
       });
     }
 
-    if (adoption.adopter.toString() !== req.user._id.toString()) {
+    if (
+      adoption.adopter.toString() !==
+      req.user._id.toString()
+    ) {
       return res.status(403).json({
         message: "You are not allowed to cancel this application",
       });
     }
 
-    // Approved/rejected applications cannot be cancelled.
+    // Only pending applications can be cancelled by the adopter.
     if (adoption.status !== "pending") {
       return res.status(400).json({
         message: "Only pending applications can be cancelled",
@@ -267,5 +331,6 @@ module.exports = {
   getMyApplications,
   getAllApplications,
   updateApplicationStatus,
+  completeAdoption,
   cancelApplication,
 };

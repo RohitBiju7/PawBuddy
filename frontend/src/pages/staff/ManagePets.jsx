@@ -97,6 +97,7 @@ const ManagePets = () => {
       setError(
         "This pet cannot be edited because its adoption process has already started.",
       );
+
       return;
     }
 
@@ -117,7 +118,9 @@ const ManagePets = () => {
     setImage(null);
 
     setImagePreview(
-      pet.image ? `http://localhost:5000/uploads/${pet.image}` : "",
+      pet.image
+        ? `http://localhost:5000/uploads/${pet.image}`
+        : "",
     );
 
     setError("");
@@ -194,16 +197,22 @@ const ManagePets = () => {
   };
 
   const handleDelete = async (pet) => {
-    if (pet.status !== "available") {
-      setError(
-        "This pet cannot be deleted because its adoption process has already started.",
-      );
-      return;
+    let confirmationMessage =
+      `Are you sure you want to permanently delete ${pet.name}?`;
+
+    if (pet.status === "pending") {
+      confirmationMessage =
+        `${pet.name} currently has an adoption in progress. ` +
+        "Deleting this pet will also remove its related adoption applications. Continue?";
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this pet?",
-    );
+    if (pet.status === "adopted") {
+      confirmationMessage =
+        `${pet.name} has already been adopted. ` +
+        "Are you sure you want to permanently remove this pet from PawBuddy?";
+    }
+
+    const confirmed = window.confirm(confirmationMessage);
 
     if (!confirmed) {
       return;
@@ -213,7 +222,7 @@ const ManagePets = () => {
       setError("");
       setSuccess("");
 
-      await deletePet(pet._id);
+      const data = await deletePet(pet._id);
 
       setPets((currentPets) =>
         currentPets.filter(
@@ -221,7 +230,9 @@ const ManagePets = () => {
         ),
       );
 
-      setSuccess("Pet deleted successfully.");
+      setSuccess(
+        data.message || "Pet deleted successfully.",
+      );
     } catch (error) {
       setError(
         error.response?.data?.message ||
@@ -240,6 +251,18 @@ const ManagePets = () => {
     }
 
     return "default";
+  };
+
+  const getStatusLabel = (status) => {
+    if (status === "pending") {
+      return "Reserved";
+    }
+
+    if (!status) {
+      return "Unknown";
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   return (
@@ -399,11 +422,10 @@ const ManagePets = () => {
                       </Typography>
 
                       <Chip
-                        label={pet.status}
+                        label={getStatusLabel(pet.status)}
                         size="small"
                         color={getStatusColor(pet.status)}
                         sx={{
-                          textTransform: "capitalize",
                           fontWeight: 600,
                         }}
                       />
@@ -451,7 +473,7 @@ const ManagePets = () => {
                       </Typography>
                     </Stack>
 
-                    {pet.status === "available" ? (
+                    {pet.status === "available" && (
                       <Stack
                         direction={{
                           xs: "column",
@@ -487,21 +509,49 @@ const ManagePets = () => {
                           Delete
                         </Button>
                       </Stack>
-                    ) : (
-                      <Alert
-                        severity={
-                          pet.status === "pending"
-                            ? "warning"
-                            : "info"
-                        }
-                        sx={{
-                          mt: 3,
-                        }}
-                      >
-                        {pet.status === "pending"
-                          ? "Adoption in progress. Pet details are locked."
-                          : "This pet has been adopted. Pet details are locked."}
-                      </Alert>
+                    )}
+
+                    {pet.status === "pending" && (
+                      <Stack spacing={1.5} sx={{ mt: 3 }}>
+                        <Alert severity="warning">
+                          Adoption in progress. Pet details are locked.
+                        </Alert>
+
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          fullWidth
+                          onClick={() => handleDelete(pet)}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Delete Pet
+                        </Button>
+                      </Stack>
+                    )}
+
+                    {pet.status === "adopted" && (
+                      <Stack spacing={1.5} sx={{ mt: 3 }}>
+                        <Alert severity="info">
+                          This pet has been adopted. Pet details are
+                          locked.
+                        </Alert>
+
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          fullWidth
+                          onClick={() => handleDelete(pet)}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Remove Pet
+                        </Button>
+                      </Stack>
                     )}
                   </CardContent>
                 </Card>

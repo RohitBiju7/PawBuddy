@@ -5,6 +5,7 @@ const {
   getMyApplications,
   getAllApplications,
   updateApplicationStatus,
+  completeAdoption,
   cancelApplication,
 } = require("../controllers/adoptionController");
 
@@ -39,6 +40,13 @@ router.patch(
   protect,
   authorizeRoles("admin", "staff"),
   updateApplicationStatus,
+);
+
+router.patch(
+  "/:id/complete",
+  protect,
+  authorizeRoles("admin", "staff"),
+  completeAdoption,
 );
 
 router.delete(

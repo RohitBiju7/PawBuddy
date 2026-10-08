@@ -18,6 +18,7 @@ import {
 import {
   getAllApplications,
   updateApplicationStatus,
+  completeAdoption,
 } from "../../services/adoptionService";
 
 const ManageAdoptions = () => {
@@ -49,7 +50,7 @@ const ManageAdoptions = () => {
     fetchApplications();
   }, []);
 
-  const getStatusColor = (status) => {
+  const getApplicationStatusColor = (status) => {
     if (status === "approved") {
       return "success";
     }
@@ -58,11 +59,28 @@ const ManageAdoptions = () => {
       return "error";
     }
 
+    if (status === "completed") {
+      return "info";
+    }
+
     return "warning";
   };
 
+  const getPetStatusLabel = (status) => {
+    if (status === "pending") {
+      return "Reserved";
+    }
+
+    if (!status) {
+      return "Unavailable";
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   const handleStatusUpdate = async (applicationId, status) => {
-    const action = status === "approved" ? "approve" : "reject";
+    const action =
+      status === "approved" ? "approve" : "reject";
 
     const confirmed = window.confirm(
       `Are you sure you want to ${action} this adoption application?`,
@@ -83,12 +101,9 @@ const ManageAdoptions = () => {
       );
 
       /*
-        Refetch all applications instead of only updating the
-        clicked application.
-
-        This is important because approving one application can
-        automatically reject other pending applications for the
-        same pet.
+        Refetch all applications because approving one application
+        automatically rejects the other pending applications for
+        the same pet.
       */
       await fetchApplications();
 
@@ -100,6 +115,38 @@ const ManageAdoptions = () => {
       setError(
         error.response?.data?.message ||
           "Failed to update adoption application.",
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleCompleteAdoption = async (applicationId, petName) => {
+    const confirmed = window.confirm(
+      `Has ${petName} been adopted by the approved adopter in person?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setUpdatingId(applicationId);
+      setError("");
+      setSuccess("");
+
+      const data = await completeAdoption(applicationId);
+
+      await fetchApplications();
+
+      setSuccess(
+        data.message ||
+          "Adoption completed successfully.",
+      );
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+          "Failed to complete the adoption.",
       );
     } finally {
       setUpdatingId(null);
@@ -131,7 +178,8 @@ const ManageAdoptions = () => {
           </Typography>
 
           <Typography color="text.secondary">
-            Review adoption requests submitted by adopters.
+            Review and manage adoption applications submitted by
+            adopters.
           </Typography>
         </Box>
 
@@ -227,7 +275,7 @@ const ManageAdoptions = () => {
 
                         <Chip
                           label={application.status}
-                          color={getStatusColor(
+                          color={getApplicationStatusColor(
                             application.status,
                           )}
                           size="small"
@@ -260,14 +308,7 @@ const ManageAdoptions = () => {
                             color="text.secondary"
                           >
                             <strong>Pet Status:</strong>{" "}
-                            <Box
-                              component="span"
-                              sx={{
-                                textTransform: "capitalize",
-                              }}
-                            >
-                              {pet.status}
-                            </Box>
+                            {getPetStatusLabel(pet.status)}
                           </Typography>
 
                           <Typography
@@ -415,19 +456,56 @@ const ManageAdoptions = () => {
                         </Stack>
                       )}
 
-                      {application.status !== "pending" && (
+                      {application.status === "approved" && pet && (
+                        <Box sx={{ mt: 3 }}>
+                          <Alert severity="success" sx={{ mb: 2 }}>
+                            This application has been approved. The pet
+                            is currently reserved for this adopter.
+                          </Alert>
+
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            disabled={
+                              updatingId === application._id
+                            }
+                            onClick={() =>
+                              handleCompleteAdoption(
+                                application._id,
+                                pet.name,
+                              )
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {updatingId === application._id
+                              ? "Updating..."
+                              : "Mark as Adopted"}
+                          </Button>
+                        </Box>
+                      )}
+
+                      {application.status === "rejected" && (
                         <Alert
-                          severity={
-                            application.status === "approved"
-                              ? "success"
-                              : "error"
-                          }
+                          severity="error"
                           sx={{
                             mt: 3,
                           }}
                         >
-                          This application has been{" "}
-                          {application.status}.
+                          This application has been rejected.
+                        </Alert>
+                      )}
+
+                      {application.status === "completed" && (
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mt: 3,
+                          }}
+                        >
+                          This adoption has been completed.
                         </Alert>
                       )}
                     </CardContent>
