@@ -67,27 +67,40 @@ const PetDetails = () => {
     const token = localStorage.getItem("token");
 
     if (!storedUser || !token) {
+      setCurrentApplication(null);
       return;
     }
 
     const user = JSON.parse(storedUser);
 
     if (user.role !== "adopter") {
+      setCurrentApplication(null);
       return;
     }
 
     try {
       const data = await getMyApplications();
 
-      const existingApplication = (data.applications || []).find(
-        (application) =>
-          application.pet?._id === id &&
-          application.status === "pending",
+      const petApplications = (data.applications || []).filter(
+        (application) => application.pet?._id === id,
       );
 
-      setCurrentApplication(existingApplication || null);
+      const approvedApplication = petApplications.find(
+        (application) => application.status === "approved",
+      );
+
+      const pendingApplication = petApplications.find(
+        (application) => application.status === "pending",
+      );
+
+      setCurrentApplication(
+        approvedApplication || pendingApplication || null,
+      );
     } catch (error) {
-      console.error("Failed to check existing application:", error);
+      console.error(
+        "Failed to check existing application:",
+        error,
+      );
     }
   };
 
@@ -161,7 +174,10 @@ const PetDetails = () => {
   };
 
   const handleCancelApplication = async () => {
-    if (!currentApplication) {
+    if (
+      !currentApplication ||
+      currentApplication.status !== "pending"
+    ) {
       return;
     }
 
@@ -193,6 +209,30 @@ const PetDetails = () => {
     } finally {
       setCancelling(false);
     }
+  };
+
+  const getPetStatusColor = (status) => {
+    if (status === "available") {
+      return "success";
+    }
+
+    if (status === "pending") {
+      return "warning";
+    }
+
+    return "default";
+  };
+
+  const getPetStatusLabel = (status) => {
+    if (status === "pending") {
+      return "Reserved";
+    }
+
+    if (!status) {
+      return "Unavailable";
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   if (loading) {
@@ -351,16 +391,9 @@ const PetDetails = () => {
                   </Typography>
 
                   <Chip
-                    label={pet.status}
-                    color={
-                      pet.status === "available"
-                        ? "success"
-                        : pet.status === "pending"
-                          ? "warning"
-                          : "default"
-                    }
+                    label={getPetStatusLabel(pet.status)}
+                    color={getPetStatusColor(pet.status)}
                     sx={{
-                      textTransform: "capitalize",
                       fontWeight: 600,
                     }}
                   />
@@ -384,7 +417,8 @@ const PetDetails = () => {
                   </Typography>
 
                   <Typography>
-                    <strong>Health Status:</strong> {pet.healthStatus}
+                    <strong>Health Status:</strong>{" "}
+                    {pet.healthStatus}
                   </Typography>
 
                   <Typography>
@@ -393,7 +427,8 @@ const PetDetails = () => {
                   </Typography>
 
                   <Typography>
-                    <strong>Adoption Fee:</strong> ₹{pet.adoptionFee}
+                    <strong>Adoption Fee:</strong> ₹
+                    {pet.adoptionFee}
                   </Typography>
                 </Stack>
 
@@ -426,8 +461,30 @@ const PetDetails = () => {
                   </Typography>
                 </Box>
 
-                {pet.status === "available" ? (
-                  currentApplication ? (
+                {currentApplication?.status === "approved" ? (
+                  <Alert
+                    severity="success"
+                    sx={{
+                      mt: 4,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        mb: 0.5,
+                      }}
+                    >
+                      Your adoption application has been approved!
+                    </Typography>
+
+                    <Typography variant="body2">
+                      {pet.name} is now reserved for you. The next
+                      steps in the adoption process will be available
+                      here as they are scheduled.
+                    </Typography>
+                  </Alert>
+                ) : pet.status === "available" ? (
+                  currentApplication?.status === "pending" ? (
                     <Stack spacing={1.5} sx={{ mt: 4 }}>
                       <Button
                         variant="contained"
@@ -439,6 +496,7 @@ const PetDetails = () => {
                           textTransform: "none",
                           fontWeight: 700,
                           fontSize: "1rem",
+
                           "&.Mui-disabled": {
                             backgroundColor: "secondary.main",
                             color: "#FFFFFF",
@@ -489,7 +547,9 @@ const PetDetails = () => {
                       mt: 4,
                     }}
                   >
-                    This pet is currently not available for adoption.
+                    {pet.status === "pending"
+                      ? "This pet is currently reserved and is no longer accepting adoption applications."
+                      : "This pet is currently not available for adoption."}
                   </Alert>
                 )}
               </Box>
@@ -503,7 +563,10 @@ const PetDetails = () => {
           fullWidth
           maxWidth="sm"
         >
-          <Box component="form" onSubmit={handleApplicationSubmit}>
+          <Box
+            component="form"
+            onSubmit={handleApplicationSubmit}
+          >
             <DialogTitle>
               Apply to Adopt {pet.name}
             </DialogTitle>
@@ -515,7 +578,8 @@ const PetDetails = () => {
                   mb: 2,
                 }}
               >
-                Tell us briefly why you would like to adopt {pet.name}.
+                Tell us briefly why you would like to adopt{" "}
+                {pet.name}.
               </Typography>
 
               {applicationError && (
@@ -568,7 +632,9 @@ const PetDetails = () => {
                   fontWeight: 600,
                 }}
               >
-                {submitting ? "Submitting..." : "Submit Application"}
+                {submitting
+                  ? "Submitting..."
+                  : "Submit Application"}
               </Button>
             </DialogActions>
           </Box>

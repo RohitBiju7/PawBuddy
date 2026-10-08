@@ -20,7 +20,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 
 import Footer from "./components/Footer";
-import MyApplications from "./pages/adopter/MyApplications";
+import MyApplications from "./pages/adoptions/MyApplications";
 
 import ManageAdoptions from "./pages/adoptions/ManageAdoptions";
 

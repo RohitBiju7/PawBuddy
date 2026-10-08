@@ -19,21 +19,29 @@ const applyForAdoption = async (req, res) => {
       });
     }
 
+    // Applications can only be submitted for available pets.
     if (pet.status !== "available") {
       return res.status(400).json({
         message: "This pet is not currently available for adoption",
       });
     }
 
+    // Prevent the same adopter from having another active application
+    // for the same pet.
     const existingApplication = await Adoption.findOne({
       pet: petId,
       adopter: req.user._id,
-      status: "pending",
+      status: {
+        $in: ["pending", "approved"],
+      },
     });
 
     if (existingApplication) {
       return res.status(400).json({
-        message: "You already have a pending application for this pet",
+        message:
+          existingApplication.status === "approved"
+            ? "Your adoption application for this pet has already been approved"
+            : "You already have a pending application for this pet",
       });
     }
 
@@ -110,28 +118,104 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    adoption.status = status;
-    await adoption.save();
-
-    if (status === "approved") {
-      await Pet.findByIdAndUpdate(adoption.pet, {
-        status: "pending",
+    // Once an application has been processed, it cannot be processed again.
+    if (adoption.status !== "pending") {
+      return res.status(400).json({
+        message: "Only pending adoption applications can be updated",
       });
-
-      await Adoption.updateMany(
-        {
-          pet: adoption.pet,
-          _id: { $ne: adoption._id },
-          status: "pending",
-        },
-        {
-          status: "rejected",
-        },
-      );
     }
 
+    /*
+      Rejection does not change the pet status.
+      The pet remains available so other adopters can still apply.
+    */
+    if (status === "rejected") {
+      adoption.status = "rejected";
+      await adoption.save();
+
+      return res.status(200).json({
+        message: "Application rejected successfully",
+        adoption,
+      });
+    }
+
+    /*
+      From this point onward, status must be "approved".
+    */
+
+    const pet = await Pet.findById(adoption.pet);
+
+    if (!pet) {
+      return res.status(404).json({
+        message: "The pet linked to this application no longer exists",
+      });
+    }
+
+    /*
+      An application can only be approved while the pet is still available.
+
+      This prevents cases such as:
+      - approving an application for an already adopted pet
+      - approving another application after one has already been approved
+      - turning a pending pet back into another adoption process
+    */
+    if (pet.status !== "available") {
+      return res.status(400).json({
+        message:
+          "This pet is no longer available, so this application cannot be approved",
+      });
+    }
+
+    /*
+      Extra consistency check.
+
+      Normally this should never happen because an approved application
+      changes the pet to pending. This also protects against old or
+      inconsistent database records.
+    */
+    const existingApprovedApplication = await Adoption.findOne({
+      pet: adoption.pet,
+      status: "approved",
+      _id: {
+        $ne: adoption._id,
+      },
+    });
+
+    if (existingApprovedApplication) {
+      return res.status(400).json({
+        message: "This pet already has an approved adoption application",
+      });
+    }
+
+    // Approve the selected application.
+    adoption.status = "approved";
+    await adoption.save();
+
+    // The pet is now reserved for the approved adopter.
+    pet.status = "pending";
+    await pet.save();
+
+    /*
+      Automatically reject every other pending application
+      for the same pet.
+    */
+    await Adoption.updateMany(
+      {
+        pet: adoption.pet,
+        _id: {
+          $ne: adoption._id,
+        },
+        status: "pending",
+      },
+      {
+        $set: {
+          status: "rejected",
+        },
+      },
+    );
+
     res.status(200).json({
-      message: `Application ${status} successfully`,
+      message: "Application approved successfully",
       adoption,
     });
   } catch (error) {
@@ -158,6 +242,7 @@ const cancelApplication = async (req, res) => {
       });
     }
 
+    // Approved/rejected applications cannot be cancelled.
     if (adoption.status !== "pending") {
       return res.status(400).json({
         message: "Only pending applications can be cancelled",

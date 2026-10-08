@@ -47,7 +47,7 @@ const MyApplications = () => {
     fetchApplications();
   }, []);
 
-  const getStatusColor = (status) => {
+  const getApplicationStatusColor = (status) => {
     if (status === "approved") {
       return "success";
     }
@@ -57,6 +57,30 @@ const MyApplications = () => {
     }
 
     return "warning";
+  };
+
+  const getPetStatusColor = (status) => {
+    if (status === "available") {
+      return "success";
+    }
+
+    if (status === "pending") {
+      return "warning";
+    }
+
+    return "default";
+  };
+
+  const getPetStatusLabel = (status) => {
+    if (status === "pending") {
+      return "Reserved";
+    }
+
+    if (!status) {
+      return "Unavailable";
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const handleCancel = async (applicationId) => {
@@ -190,32 +214,60 @@ const MyApplications = () => {
                         flexGrow: 1,
                       }}
                     >
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                        spacing={1}
-                        sx={{ mb: 2 }}
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "primary.main",
+                          fontWeight: 700,
+                          mb: 2,
+                        }}
                       >
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            color: "primary.main",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {pet?.name || "Pet unavailable"}
-                        </Typography>
+                        {pet?.name || "Pet unavailable"}
+                      </Typography>
 
-                        <Chip
-                          label={application.status}
-                          color={getStatusColor(application.status)}
-                          size="small"
-                          sx={{
-                            textTransform: "capitalize",
-                            fontWeight: 600,
-                          }}
-                        />
+                      <Stack spacing={1.5} sx={{ mb: 2 }}>
+                        <Box>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 0.7 }}
+                          >
+                            Application Status
+                          </Typography>
+
+                          <Chip
+                            label={application.status}
+                            color={getApplicationStatusColor(
+                              application.status,
+                            )}
+                            size="small"
+                            sx={{
+                              textTransform: "capitalize",
+                              fontWeight: 600,
+                            }}
+                          />
+                        </Box>
+
+                        {pet && (
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mb: 0.7 }}
+                            >
+                              Pet Status
+                            </Typography>
+
+                            <Chip
+                              label={getPetStatusLabel(pet.status)}
+                              color={getPetStatusColor(pet.status)}
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                              }}
+                            />
+                          </Box>
+                        )}
                       </Stack>
 
                       {pet && (
@@ -238,7 +290,8 @@ const MyApplications = () => {
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Adoption Fee:</strong> ₹{pet.adoptionFee}
+                            <strong>Adoption Fee:</strong> ₹
+                            {pet.adoptionFee}
                           </Typography>
                         </Stack>
                       )}
@@ -272,37 +325,64 @@ const MyApplications = () => {
                         </Box>
                       )}
 
-                      {pet && (
-                        <Button
-                          component={Link}
-                          to={`/pets/${pet._id}`}
-                          variant="outlined"
-                          fullWidth
+                      {application.status === "approved" && (
+                        <Alert
+                          severity="success"
                           sx={{
-                            mt: 3,
-                            textTransform: "none",
-                            fontWeight: 600,
+                            mt: 2,
                           }}
                         >
-                          View Pet
-                        </Button>
+                          Your adoption application has been approved.
+                          {pet?.status === "pending" &&
+                            ` ${pet.name} is now reserved for you.`}
+                        </Alert>
                       )}
 
-                      {application.status === "pending" && (
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          fullWidth
-                          onClick={() => handleCancel(application._id)}
+                      {application.status === "rejected" && (
+                        <Alert
+                          severity="error"
                           sx={{
-                            mt: 1.5,
-                            textTransform: "none",
-                            fontWeight: 600,
+                            mt: 2,
                           }}
                         >
-                          Cancel Application
-                        </Button>
+                          This adoption application was rejected.
+                        </Alert>
                       )}
+
+                      <Box sx={{ mt: "auto", pt: 3 }}>
+                        {pet && (
+                          <Button
+                            component={Link}
+                            to={`/pets/${pet._id}`}
+                            variant="outlined"
+                            fullWidth
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                            }}
+                          >
+                            View Pet
+                          </Button>
+                        )}
+
+                        {application.status === "pending" && (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            fullWidth
+                            onClick={() =>
+                              handleCancel(application._id)
+                            }
+                            sx={{
+                              mt: 1.5,
+                              textTransform: "none",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Cancel Application
+                          </Button>
+                        )}
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>

@@ -1,7 +1,25 @@
 const Pet = require("../models/petModel");
+const Adoption = require("../models/adoptionModel");
 
 const fs = require("fs");
 const path = require("path");
+
+const removeUploadedFile = (file) => {
+  if (!file) {
+    return;
+  }
+
+  const filePath = path.join(
+    __dirname,
+    "..",
+    "uploads",
+    file.filename,
+  );
+
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+};
 
 const addPet = async (req, res) => {
   try {
@@ -27,6 +45,8 @@ const addPet = async (req, res) => {
       !healthStatus ||
       adoptionFee === undefined
     ) {
+      removeUploadedFile(req.file);
+
       return res.status(400).json({
         message: "Please provide all required pet details",
       });
@@ -44,6 +64,7 @@ const addPet = async (req, res) => {
       adoptionFee,
       image: req.file ? req.file.filename : null,
       createdBy: req.user._id,
+      status: "available",
     });
 
     res.status(201).json({
@@ -51,6 +72,8 @@ const addPet = async (req, res) => {
       pet,
     });
   } catch (error) {
+    removeUploadedFile(req.file);
+
     res.status(500).json({
       message: "Server error",
       error: error.message,
@@ -79,8 +102,18 @@ const getAllPets = async (req, res) => {
 
     if (search) {
       filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { breed: { $regex: search, $options: "i" } },
+        {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          breed: {
+            $regex: search,
+            $options: "i",
+          },
+        },
       ];
     }
 
@@ -125,8 +158,43 @@ const updatePet = async (req, res) => {
     const pet = await Pet.findById(req.params.id);
 
     if (!pet) {
+      removeUploadedFile(req.file);
+
       return res.status(404).json({
         message: "Pet not found",
+      });
+    }
+
+    /*
+      Once a pet enters the adoption process, its details
+      should no longer be editable.
+
+      available = editable
+      pending   = locked
+      adopted   = locked
+    */
+    if (pet.status !== "available") {
+      removeUploadedFile(req.file);
+
+      return res.status(400).json({
+        message:
+          "This pet cannot be edited because its adoption process has already started.",
+      });
+    }
+
+    /*
+      Status itself can never be manually changed through
+      the normal pet update endpoint.
+    */
+    if (
+      req.body.status !== undefined &&
+      req.body.status !== pet.status
+    ) {
+      removeUploadedFile(req.file);
+
+      return res.status(400).json({
+        message:
+          "Pet adoption status cannot be changed manually. It is controlled by the adoption process.",
       });
     }
 
@@ -140,7 +208,6 @@ const updatePet = async (req, res) => {
       "healthStatus",
       "vaccinationStatus",
       "adoptionFee",
-      "status",
     ];
 
     allowedFields.forEach((field) => {
@@ -150,15 +217,22 @@ const updatePet = async (req, res) => {
     });
 
     if (req.file) {
+      const newImageFilename = req.file.filename;
+
       if (pet.image) {
-        const oldImagePath = path.join(__dirname, "..", "uploads", pet.image);
+        const oldImagePath = path.join(
+          __dirname,
+          "..",
+          "uploads",
+          pet.image,
+        );
 
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
       }
 
-      pet.image = req.file.filename;
+      pet.image = newImageFilename;
     }
 
     await pet.save();
@@ -168,6 +242,8 @@ const updatePet = async (req, res) => {
       pet,
     });
   } catch (error) {
+    removeUploadedFile(req.file);
+
     res.status(500).json({
       message: "Server error",
       error: error.message,
@@ -186,8 +262,30 @@ const deletePet = async (req, res) => {
       });
     }
 
+    /*
+      A pet with any adoption history should not be deleted.
+
+      This prevents adoption records from pointing
+      to a deleted pet.
+    */
+    const adoptionExists = await Adoption.exists({
+      pet: pet._id,
+    });
+
+    if (adoptionExists) {
+      return res.status(400).json({
+        message:
+          "This pet cannot be deleted because it has adoption applications associated with it.",
+      });
+    }
+
     if (pet.image) {
-      const imagePath = path.join(__dirname, "..", "uploads", pet.image);
+      const imagePath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        pet.image,
+      );
 
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);

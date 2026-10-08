@@ -77,21 +77,24 @@ const ManageAdoptions = () => {
       setError("");
       setSuccess("");
 
-      await updateApplicationStatus(applicationId, status);
-
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application._id === applicationId
-            ? {
-                ...application,
-                status,
-              }
-            : application,
-        ),
+      const data = await updateApplicationStatus(
+        applicationId,
+        status,
       );
 
+      /*
+        Refetch all applications instead of only updating the
+        clicked application.
+
+        This is important because approving one application can
+        automatically reject other pending applications for the
+        same pet.
+      */
+      await fetchApplications();
+
       setSuccess(
-        `Adoption application ${status} successfully.`,
+        data.message ||
+          `Adoption application ${status} successfully.`,
       );
     } catch (error) {
       setError(
@@ -224,7 +227,9 @@ const ManageAdoptions = () => {
 
                         <Chip
                           label={application.status}
-                          color={getStatusColor(application.status)}
+                          color={getStatusColor(
+                            application.status,
+                          )}
                           size="small"
                           sx={{
                             textTransform: "capitalize",
@@ -246,16 +251,40 @@ const ManageAdoptions = () => {
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Species:</strong> {pet.species}
+                            <strong>Species:</strong>{" "}
+                            {pet.species}
                           </Typography>
 
                           <Typography
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Adoption Fee:</strong> ₹{pet.adoptionFee}
+                            <strong>Pet Status:</strong>{" "}
+                            <Box
+                              component="span"
+                              sx={{
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {pet.status}
+                            </Box>
+                          </Typography>
+
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            <strong>Adoption Fee:</strong> ₹
+                            {pet.adoptionFee}
                           </Typography>
                         </Stack>
+                      )}
+
+                      {!pet && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                          The pet linked to this application no
+                          longer exists.
+                        </Alert>
                       )}
 
                       <Divider sx={{ my: 2 }} />
@@ -327,7 +356,7 @@ const ManageAdoptions = () => {
                         </Box>
                       )}
 
-                      {application.status === "pending" && (
+                      {application.status === "pending" && pet && (
                         <Stack
                           direction={{
                             xs: "column",
@@ -342,7 +371,9 @@ const ManageAdoptions = () => {
                             variant="contained"
                             color="success"
                             fullWidth
-                            disabled={updatingId === application._id}
+                            disabled={
+                              updatingId === application._id
+                            }
                             onClick={() =>
                               handleStatusUpdate(
                                 application._id,
@@ -354,14 +385,18 @@ const ManageAdoptions = () => {
                               fontWeight: 600,
                             }}
                           >
-                            Approve
+                            {updatingId === application._id
+                              ? "Updating..."
+                              : "Approve"}
                           </Button>
 
                           <Button
                             variant="outlined"
                             color="error"
                             fullWidth
-                            disabled={updatingId === application._id}
+                            disabled={
+                              updatingId === application._id
+                            }
                             onClick={() =>
                               handleStatusUpdate(
                                 application._id,
@@ -373,7 +408,9 @@ const ManageAdoptions = () => {
                               fontWeight: 600,
                             }}
                           >
-                            Reject
+                            {updatingId === application._id
+                              ? "Updating..."
+                              : "Reject"}
                           </Button>
                         </Stack>
                       )}
@@ -389,7 +426,8 @@ const ManageAdoptions = () => {
                             mt: 3,
                           }}
                         >
-                          This application has been {application.status}.
+                          This application has been{" "}
+                          {application.status}.
                         </Alert>
                       )}
                     </CardContent>

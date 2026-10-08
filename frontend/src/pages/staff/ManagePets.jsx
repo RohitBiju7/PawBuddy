@@ -49,7 +49,6 @@ const ManagePets = () => {
     healthStatus: "",
     vaccinationStatus: "not vaccinated",
     adoptionFee: "",
-    status: "available",
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -94,6 +93,13 @@ const ManagePets = () => {
   };
 
   const handleEditOpen = (pet) => {
+    if (pet.status !== "available") {
+      setError(
+        "This pet cannot be edited because its adoption process has already started.",
+      );
+      return;
+    }
+
     setEditingPet(pet);
 
     setFormData({
@@ -106,7 +112,6 @@ const ManagePets = () => {
       healthStatus: pet.healthStatus,
       vaccinationStatus: pet.vaccinationStatus,
       adoptionFee: pet.adoptionFee,
-      status: pet.status,
     });
 
     setImage(null);
@@ -155,12 +160,11 @@ const ManagePets = () => {
       petData.append("gender", formData.gender);
       petData.append("description", formData.description);
       petData.append("healthStatus", formData.healthStatus);
-      petData.append("vaccinationStatus", formData.vaccinationStatus);
+      petData.append(
+        "vaccinationStatus",
+        formData.vaccinationStatus,
+      );
       petData.append("adoptionFee", formData.adoptionFee);
-
-      if (editingPet) {
-        petData.append("status", formData.status);
-      }
 
       if (image) {
         petData.append("image", image);
@@ -168,14 +172,19 @@ const ManagePets = () => {
 
       if (editingPet) {
         await updatePet(editingPet._id, petData);
+
+        handleClose();
+        await fetchPets();
+
         setSuccess("Pet updated successfully.");
       } else {
         await addPet(petData);
+
+        handleClose();
+        await fetchPets();
+
         setSuccess("Pet added successfully.");
       }
-
-      handleClose();
-      await fetchPets();
     } catch (error) {
       setError(
         error.response?.data?.message ||
@@ -184,7 +193,14 @@ const ManagePets = () => {
     }
   };
 
-  const handleDelete = async (petId) => {
+  const handleDelete = async (pet) => {
+    if (pet.status !== "available") {
+      setError(
+        "This pet cannot be deleted because its adoption process has already started.",
+      );
+      return;
+    }
+
     const confirmed = window.confirm(
       "Are you sure you want to delete this pet?",
     );
@@ -197,14 +213,33 @@ const ManagePets = () => {
       setError("");
       setSuccess("");
 
-      await deletePet(petId);
+      await deletePet(pet._id);
 
-      setPets((currentPets) => currentPets.filter((pet) => pet._id !== petId));
+      setPets((currentPets) =>
+        currentPets.filter(
+          (currentPet) => currentPet._id !== pet._id,
+        ),
+      );
 
       setSuccess("Pet deleted successfully.");
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to delete pet.");
+      setError(
+        error.response?.data?.message ||
+          "Failed to delete pet.",
+      );
     }
+  };
+
+  const getStatusColor = (status) => {
+    if (status === "available") {
+      return "success";
+    }
+
+    if (status === "pending") {
+      return "warning";
+    }
+
+    return "default";
   };
 
   return (
@@ -248,7 +283,7 @@ const ManagePets = () => {
             </Typography>
 
             <Typography color="text.secondary">
-              Add, update and remove pets available for adoption.
+              Add, update and manage pets listed on PawBuddy.
             </Typography>
           </Box>
 
@@ -316,7 +351,7 @@ const ManagePets = () => {
                     overflow: "hidden",
                   }}
                 >
-                  {pet.image && (
+                  {pet.image ? (
                     <Box
                       component="img"
                       src={`http://localhost:5000/uploads/${pet.image}`}
@@ -327,19 +362,52 @@ const ManagePets = () => {
                         objectFit: "cover",
                       }}
                     />
+                  ) : (
+                    <Box
+                      sx={{
+                        height: 220,
+                        backgroundColor: "#EAF4F1",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Typography color="text.secondary">
+                        No Image Available
+                      </Typography>
+                    </Box>
                   )}
 
                   <CardContent>
-                    <Typography
-                      variant="h6"
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                      spacing={1}
                       sx={{
-                        color: "primary.main",
-                        fontWeight: 700,
-                        mb: 1,
+                        mb: 2,
                       }}
                     >
-                      {pet.name}
-                    </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "primary.main",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {pet.name}
+                      </Typography>
+
+                      <Chip
+                        label={pet.status}
+                        size="small"
+                        color={getStatusColor(pet.status)}
+                        sx={{
+                          textTransform: "capitalize",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Stack>
 
                     <Stack spacing={1.2}>
                       <Typography color="text.secondary">
@@ -359,34 +427,19 @@ const ManagePets = () => {
                       </Typography>
 
                       <Typography color="text.secondary">
-                        <strong>Health:</strong> {pet.healthStatus}
+                        <strong>Health:</strong>{" "}
+                        {pet.healthStatus}
                       </Typography>
 
                       <Typography color="text.secondary">
-                        <strong>Vaccination:</strong> {pet.vaccinationStatus}
+                        <strong>Vaccination:</strong>{" "}
+                        {pet.vaccinationStatus}
                       </Typography>
 
                       <Typography color="text.secondary">
-                        <strong>Adoption Fee:</strong> ₹{pet.adoptionFee}
+                        <strong>Adoption Fee:</strong> ₹
+                        {pet.adoptionFee}
                       </Typography>
-
-                      <Box>
-                        <Chip
-                          label={pet.status}
-                          size="small"
-                          color={
-                            pet.status === "available"
-                              ? "success"
-                              : pet.status === "pending"
-                                ? "warning"
-                                : "default"
-                          }
-                          sx={{
-                            textTransform: "capitalize",
-                            fontWeight: 600,
-                          }}
-                        />
-                      </Box>
 
                       <Typography
                         color="text.secondary"
@@ -398,41 +451,58 @@ const ManagePets = () => {
                       </Typography>
                     </Stack>
 
-                    <Stack
-                      direction={{
-                        xs: "column",
-                        sm: "row",
-                      }}
-                      spacing={1.5}
-                      sx={{
-                        mt: 3,
-                      }}
-                    >
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        onClick={() => handleEditOpen(pet)}
+                    {pet.status === "available" ? (
+                      <Stack
+                        direction={{
+                          xs: "column",
+                          sm: "row",
+                        }}
+                        spacing={1.5}
                         sx={{
-                          textTransform: "none",
-                          fontWeight: 600,
+                          mt: 3,
                         }}
                       >
-                        Edit
-                      </Button>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => handleEditOpen(pet)}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Edit
+                        </Button>
 
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        fullWidth
-                        onClick={() => handleDelete(pet._id)}
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          fullWidth
+                          onClick={() => handleDelete(pet)}
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </Stack>
+                    ) : (
+                      <Alert
+                        severity={
+                          pet.status === "pending"
+                            ? "warning"
+                            : "info"
+                        }
                         sx={{
-                          textTransform: "none",
-                          fontWeight: 600,
+                          mt: 3,
                         }}
                       >
-                        Delete
-                      </Button>
-                    </Stack>
+                        {pet.status === "pending"
+                          ? "Adoption in progress. Pet details are locked."
+                          : "This pet has been adopted. Pet details are locked."}
+                      </Alert>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -454,9 +524,16 @@ const ManagePets = () => {
           </Grid>
         )}
 
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          fullWidth
+          maxWidth="sm"
+        >
           <Box component="form" onSubmit={handleSubmit}>
-            <DialogTitle>{editingPet ? "Edit Pet" : "Add Pet"}</DialogTitle>
+            <DialogTitle>
+              {editingPet ? "Edit Pet" : "Add Pet"}
+            </DialogTitle>
 
             <DialogContent>
               <Stack
@@ -531,7 +608,11 @@ const ManagePets = () => {
                     py: 1.4,
                   }}
                 >
-                  {image ? image.name : "Choose Pet Image (Optional)"}
+                  {image
+                    ? image.name
+                    : editingPet
+                      ? "Choose New Pet Image (Optional)"
+                      : "Choose Pet Image (Optional)"}
 
                   <input
                     type="file"
@@ -584,11 +665,17 @@ const ManagePets = () => {
                   onChange={handleChange}
                   fullWidth
                 >
-                  <MenuItem value="vaccinated">Vaccinated</MenuItem>
+                  <MenuItem value="vaccinated">
+                    Vaccinated
+                  </MenuItem>
 
-                  <MenuItem value="not vaccinated">Not Vaccinated</MenuItem>
+                  <MenuItem value="not vaccinated">
+                    Not Vaccinated
+                  </MenuItem>
 
-                  <MenuItem value="partial">Partial</MenuItem>
+                  <MenuItem value="partial">
+                    Partial
+                  </MenuItem>
                 </TextField>
 
                 <TextField
@@ -603,23 +690,6 @@ const ManagePets = () => {
                   required
                   fullWidth
                 />
-
-                {editingPet && (
-                  <TextField
-                    select
-                    label="Adoption Status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    fullWidth
-                  >
-                    <MenuItem value="available">Available</MenuItem>
-
-                    <MenuItem value="pending">Pending</MenuItem>
-
-                    <MenuItem value="adopted">Adopted</MenuItem>
-                  </TextField>
-                )}
               </Stack>
             </DialogContent>
 
