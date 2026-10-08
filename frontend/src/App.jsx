@@ -19,10 +19,21 @@ import ManagePets from "./pages/staff/ManagePets";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 
+import Footer from "./components/Footer";
+import MyApplications from "./pages/adopter/MyApplications";
+
+import ManageAdoptions from "./pages/adoptions/ManageAdoptions";
+
 const App = () => {
   return (
     <BrowserRouter>
-      <div>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <Navbar />
 
         <Routes>
@@ -87,7 +98,27 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/my-applications"
+            element={
+              <ProtectedRoute allowedRoles={["adopter"]}>
+                <MyApplications />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/manage-adoptions"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <ManageAdoptions />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
+
+        <Footer />
       </div>
     </BrowserRouter>
   );

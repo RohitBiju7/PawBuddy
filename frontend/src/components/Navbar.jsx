@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import {
   AppBar,
   Toolbar,
-  Typography,
   Box,
   Button,
   IconButton,
@@ -11,7 +11,9 @@ import {
   MenuItem,
   Container,
 } from "@mui/material";
+
 import MenuIcon from "@mui/icons-material/Menu";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 import pawBuddyLogo from "../assets/pawbuddy-logo.png";
 
@@ -19,7 +21,9 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -58,6 +62,7 @@ const Navbar = () => {
             justifyContent: "space-between",
           }}
         >
+          {/* Logo */}
           <Box
             component={Link}
             to="/"
@@ -82,6 +87,7 @@ const Navbar = () => {
             />
           </Box>
 
+          {/* Desktop Navigation */}
           <Box
             sx={{
               display: {
@@ -105,6 +111,16 @@ const Navbar = () => {
                 <Button component={Link} to="/profile" color="inherit">
                   Profile
                 </Button>
+
+                {user.role === "adopter" && (
+                  <Button
+                    component={Link}
+                    to="/my-applications"
+                    color="inherit"
+                  >
+                    My Applications
+                  </Button>
+                )}
 
                 {user.role === "admin" && (
                   <>
@@ -132,10 +148,10 @@ const Navbar = () => {
 
                 <Button
                   onClick={handleLogout}
-                  variant="contained"
-                  color="secondary"
+                  variant="text"
+                  color="inherit"
+                  startIcon={<LogoutIcon />}
                   sx={{
-                    color: "#FFFFFF",
                     fontWeight: 600,
                   }}
                 >
@@ -150,22 +166,14 @@ const Navbar = () => {
                   Login
                 </Button>
 
-                <Button
-                  component={Link}
-                  to="/register"
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    color: "#FFFFFF",
-                    fontWeight: 600,
-                  }}
-                >
+                <Button component={Link} to="/register" color="inherit">
                   Register
                 </Button>
               </>
             )}
           </Box>
 
+          {/* Mobile Navigation */}
           <Box
             sx={{
               display: {
@@ -213,6 +221,16 @@ const Navbar = () => {
                     Profile
                   </MenuItem>
 
+                  {user.role === "adopter" && (
+                    <MenuItem
+                      component={Link}
+                      to="/my-applications"
+                      onClick={handleMenuClose}
+                    >
+                      My Applications
+                    </MenuItem>
+                  )}
+
                   {user.role === "admin" && (
                     <>
                       <MenuItem
@@ -253,7 +271,10 @@ const Navbar = () => {
                     </>
                   )}
 
-                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                  <MenuItem onClick={handleLogout}>
+                    <LogoutIcon sx={{ mr: 1.5 }} />
+                    Logout
+                  </MenuItem>
                 </>
               )}
 

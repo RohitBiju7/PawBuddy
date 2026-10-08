@@ -68,6 +68,7 @@ const AdminDashboard = () => {
         </Box>
 
         <Grid container spacing={3}>
+          {/* User Management */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Card
               onClick={() => navigate("/admin/users")}
@@ -101,6 +102,7 @@ const AdminDashboard = () => {
             </Card>
           </Grid>
 
+          {/* Create Staff */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Card
               onClick={() => navigate("/admin/create-staff")}
@@ -134,6 +136,7 @@ const AdminDashboard = () => {
             </Card>
           </Grid>
 
+          {/* Manage Pets */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Card
               onClick={() => navigate("/staff/pets")}
@@ -162,6 +165,40 @@ const AdminDashboard = () => {
                   }}
                 >
                   Add, update, view and remove pets available for adoption.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Adoption Applications */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Card
+              onClick={() => navigate("/manage-adoptions")}
+              sx={cardStyle}
+            >
+              <CardContent
+                sx={{
+                  p: 3,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "secondary.main",
+                    fontWeight: 700,
+                    mb: 1,
+                  }}
+                >
+                  Adoption Applications
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
+                  Review and manage adoption requests submitted by adopters.
                 </Typography>
               </CardContent>
             </Card>

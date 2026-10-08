@@ -54,11 +54,13 @@ const StaffDashboard = () => {
           </Typography>
 
           <Typography color="text.secondary">
-            Welcome, {user?.name || "Staff"}. Manage shelter pets from here.
+            Welcome, {user?.name || "Staff"}. Manage shelter pets and adoption
+            applications from here.
           </Typography>
         </Box>
 
         <Grid container spacing={3}>
+          {/* Manage Pets */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Card
               onClick={() => navigate("/staff/pets")}
@@ -83,6 +85,7 @@ const StaffDashboard = () => {
             </Card>
           </Grid>
 
+          {/* View Pet Listings */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Card
               onClick={() => navigate("/pets")}
@@ -102,6 +105,32 @@ const StaffDashboard = () => {
 
                 <Typography color="text.secondary">
                   View the pets currently listed on PawBuddy.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Adoption Applications */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Card
+              onClick={() => navigate("/manage-adoptions")}
+              sx={cardStyle}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "primary.main",
+                    fontWeight: 700,
+                    mb: 1,
+                  }}
+                >
+                  Adoption Applications
+                </Typography>
+
+                <Typography color="text.secondary">
+                  Review and manage adoption applications submitted by
+                  adopters.
                 </Typography>
               </CardContent>
             </Card>

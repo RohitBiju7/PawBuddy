@@ -1,7 +1,7 @@
 import axiosInstance from "./axiosInterceptor";
 
-export const getAllPets = async () => {
-  const response = await axiosInstance.get("/pets");
+export const getAllPets = async (params = {}) => {
+  const response = await axiosInstance.get("/pets", { params });
   return response.data;
 };
 

@@ -3,6 +3,7 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const petRoutes = require("./routes/petRoutes");
 require("dotenv").config();
+const adoptionRoutes = require("./routes/adoptionRoutes");
 
 const connectDB = require("./config/db");
 const path = require("path");
@@ -22,6 +23,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
   res.send("PawBuddy API is running");
 });
+
+app.use("/api/adoptions", adoptionRoutes);
 
 const PORT = process.env.PORT || 5000;
 
