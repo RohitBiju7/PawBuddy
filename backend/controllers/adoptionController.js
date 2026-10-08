@@ -1,5 +1,6 @@
 const Adoption = require("../models/adoptionModel");
 const Pet = require("../models/petModel");
+const sendEmail = require("../utils/sendEmail");
 
 const applyForAdoption = async (req, res) => {
   try {
@@ -19,15 +20,12 @@ const applyForAdoption = async (req, res) => {
       });
     }
 
-    // Applications can only be submitted for available pets.
     if (pet.status !== "available") {
       return res.status(400).json({
         message: "This pet is not currently available for adoption",
       });
     }
 
-    // Prevent the same adopter from having another active application
-    // for the same pet.
     const existingApplication = await Adoption.findOne({
       pet: petId,
       adopter: req.user._id,
@@ -118,18 +116,12 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // Once an application has been processed,
-    // it cannot be approved or rejected again.
     if (adoption.status !== "pending") {
       return res.status(400).json({
         message: "Only pending adoption applications can be updated",
       });
     }
 
-    /*
-      Rejection does not change the pet status.
-      The pet remains available so other adopters can still apply.
-    */
     if (status === "rejected") {
       adoption.status = "rejected";
       await adoption.save();
@@ -140,10 +132,6 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    /*
-      From this point onward, status must be "approved".
-    */
-
     const pet = await Pet.findById(adoption.pet);
 
     if (!pet) {
@@ -152,10 +140,6 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    /*
-      An application can only be approved while
-      the pet is still available.
-    */
     if (pet.status !== "available") {
       return res.status(400).json({
         message:
@@ -163,12 +147,6 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    /*
-      Extra consistency check.
-
-      Normally this should never happen because approving an
-      application changes the pet to pending.
-    */
     const existingApprovedApplication = await Adoption.findOne({
       pet: adoption.pet,
       status: "approved",
@@ -183,18 +161,15 @@ const updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // Approve the selected application.
+    // Approve selected application.
     adoption.status = "approved";
     await adoption.save();
 
-    // The pet is now reserved for the approved adopter.
+    // Reserve the pet.
     pet.status = "pending";
     await pet.save();
 
-    /*
-      Automatically reject every other pending application
-      for the same pet.
-    */
+    // Reject all other pending applications for the same pet.
     await Adoption.updateMany(
       {
         pet: adoption.pet,
@@ -210,9 +185,73 @@ const updateApplicationStatus = async (req, res) => {
       },
     );
 
+    /*
+      Load adopter details so we can send the approval email.
+    */
+    await adoption.populate("adopter", "name email");
+
+    let emailSent = false;
+
+    /*
+      Email failure should not undo the approval.
+
+      The adoption and pet status changes have already been
+      successfully saved to MongoDB.
+    */
+    try {
+      if (adoption.adopter?.email) {
+        await sendEmail({
+          to: adoption.adopter.email,
+          subject: `Your adoption application for ${pet.name} has been approved!`,
+          text:
+            `Hello ${adoption.adopter.name},\n\n` +
+            `Great news! Your adoption application for ${pet.name} has been approved by PawBuddy.\n\n` +
+            `${pet.name} is now reserved for you. We will provide further information regarding the next steps in the adoption process.\n\n` +
+            `Thank you for choosing PawBuddy!`,
+
+          html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+              <h2 style="color: #2F7D6D;">
+                Adoption Application Approved 🐾
+              </h2>
+
+              <p>Hello ${adoption.adopter.name},</p>
+
+              <p>
+                Great news! Your adoption application for
+                <strong>${pet.name}</strong> has been approved by PawBuddy.
+              </p>
+
+              <p>
+                <strong>${pet.name}</strong> is now reserved for you.
+                We will provide further information regarding the next
+                steps in the adoption process.
+              </p>
+
+              <p>
+                Thank you for choosing PawBuddy!
+              </p>
+
+              <p style="color: #2F7D6D; font-weight: bold;">
+                PawBuddy
+              </p>
+            </div>
+          `,
+        });
+
+        emailSent = true;
+      }
+    } catch (emailError) {
+      console.error(
+        "Failed to send adoption approval email:",
+        emailError.message,
+      );
+    }
+
     res.status(200).json({
       message: "Application approved successfully",
       adoption,
+      emailSent,
     });
   } catch (error) {
     res.status(500).json({
@@ -232,14 +271,6 @@ const completeAdoption = async (req, res) => {
       });
     }
 
-    /*
-      Only an approved adoption can be completed.
-
-      pending   -> cannot complete
-      rejected  -> cannot complete
-      completed -> cannot complete again
-      approved  -> allowed
-    */
     if (adoption.status !== "approved") {
       return res.status(400).json({
         message:
@@ -255,12 +286,6 @@ const completeAdoption = async (req, res) => {
       });
     }
 
-    /*
-      An approved adoption should have a reserved pet.
-
-      Backend value:
-      pending = Reserved
-    */
     if (pet.status !== "pending") {
       return res.status(400).json({
         message:
@@ -306,7 +331,6 @@ const cancelApplication = async (req, res) => {
       });
     }
 
-    // Only pending applications can be cancelled by the adopter.
     if (adoption.status !== "pending") {
       return res.status(400).json({
         message: "Only pending applications can be cancelled",

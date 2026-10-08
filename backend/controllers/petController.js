@@ -1,5 +1,6 @@
 const Pet = require("../models/petModel");
 const Adoption = require("../models/adoptionModel");
+const sendEmail = require("../utils/sendEmail");
 
 const fs = require("fs");
 const path = require("path");
@@ -263,25 +264,127 @@ const deletePet = async (req, res) => {
     }
 
     /*
-      Find adoption applications before deletion.
-
-      Later, when Nodemailer is integrated, pending/approved
-      adopters will be notified here before their records
-      are removed.
+      Find all adoption applications before deletion so
+      affected adopters can be notified.
     */
     const relatedApplications = await Adoption.find({
       pet: pet._id,
     }).populate("adopter", "name email");
 
     /*
-      We keep these for the upcoming email notification step.
+      Only pending and approved applications need a deletion notice.
 
-      Example:
-      relatedApplications.filter(
-        (application) =>
-          ["pending", "approved"].includes(application.status)
-      );
+      Rejected applications are already closed.
+      Completed applications are historical and the adoption
+      has already finished.
     */
+    const applicationsToNotify = relatedApplications.filter(
+      (application) =>
+        ["pending", "approved"].includes(application.status),
+    );
+
+    let emailsSent = 0;
+
+    /*
+      Send notifications before deleting the records.
+
+      Email failures do not prevent pet deletion.
+    */
+    for (const application of applicationsToNotify) {
+      if (!application.adopter?.email) {
+        continue;
+      }
+
+      const isApproved = application.status === "approved";
+
+      const subject = isApproved
+        ? `Important update about your adoption of ${pet.name}`
+        : `Update about your adoption application for ${pet.name}`;
+
+      const text = isApproved
+        ? `Hello ${application.adopter.name},\n\n` +
+          `We are sorry to inform you that ${pet.name}, who had been reserved for you, is no longer available through PawBuddy.\n\n` +
+          `Your approved adoption process has therefore been cancelled.\n\n` +
+          `Please contact the shelter if you need any further information.\n\n` +
+          `PawBuddy`
+        : `Hello ${application.adopter.name},\n\n` +
+          `We are sorry to inform you that ${pet.name}, the pet you applied to adopt, is no longer available through PawBuddy.\n\n` +
+          `Your adoption application will therefore be removed.\n\n` +
+          `Thank you for your understanding.\n\n` +
+          `PawBuddy`;
+
+      const html = isApproved
+        ? `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2 style="color: #2F7D6D;">
+              Important Adoption Update
+            </h2>
+
+            <p>Hello ${application.adopter.name},</p>
+
+            <p>
+              We are sorry to inform you that
+              <strong>${pet.name}</strong>, who had been reserved for you,
+              is no longer available through PawBuddy.
+            </p>
+
+            <p>
+              Your approved adoption process has therefore been cancelled.
+            </p>
+
+            <p>
+              Please contact the shelter if you need any further information.
+            </p>
+
+            <p style="color: #2F7D6D; font-weight: bold;">
+              PawBuddy
+            </p>
+          </div>
+        `
+        : `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2 style="color: #2F7D6D;">
+              Adoption Application Update
+            </h2>
+
+            <p>Hello ${application.adopter.name},</p>
+
+            <p>
+              We are sorry to inform you that
+              <strong>${pet.name}</strong>, the pet you applied to adopt,
+              is no longer available through PawBuddy.
+            </p>
+
+            <p>
+              Your adoption application will therefore be removed.
+            </p>
+
+            <p>
+              Thank you for your understanding.
+            </p>
+
+            <p style="color: #2F7D6D; font-weight: bold;">
+              PawBuddy
+            </p>
+          </div>
+        `;
+
+      try {
+        await sendEmail({
+          to: application.adopter.email,
+          subject,
+          text,
+          html,
+        });
+
+        emailsSent += 1;
+      } catch (emailError) {
+        console.error(
+          `Failed to send deletion email to ${application.adopter.email}:`,
+          emailError.message,
+        );
+      }
+    }
 
     // Delete all adoption records linked to this pet.
     await Adoption.deleteMany({
@@ -308,6 +411,8 @@ const deletePet = async (req, res) => {
     res.status(200).json({
       message: "Pet deleted successfully",
       affectedApplications: relatedApplications.length,
+      notifiedApplications: applicationsToNotify.length,
+      emailsSent,
     });
   } catch (error) {
     res.status(500).json({
