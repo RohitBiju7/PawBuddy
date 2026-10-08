@@ -1,5 +1,6 @@
 const Pet = require("../models/petModel");
 const Adoption = require("../models/adoptionModel");
+const Appointment = require("../models/appointmentModel");
 const sendEmail = require("../utils/sendEmail");
 
 const fs = require("fs");
@@ -264,38 +265,47 @@ const deletePet = async (req, res) => {
     }
 
     /*
-      Find all adoption applications before deletion so
+      Find adoption applications before deletion so
       affected adopters can be notified.
     */
     const relatedApplications = await Adoption.find({
       pet: pet._id,
     }).populate("adopter", "name email");
 
-    /*
-      Only pending and approved applications need a deletion notice.
-
-      Rejected applications are already closed.
-      Completed applications are historical and the adoption
-      has already finished.
-    */
     const applicationsToNotify = relatedApplications.filter(
       (application) =>
         ["pending", "approved"].includes(application.status),
     );
 
-    let emailsSent = 0;
+    /*
+      Find appointments linked to the pet before deletion.
+
+      Pending and approved appointments are active appointments,
+      so those adopters should be informed that the appointment
+      can no longer take place.
+    */
+    const relatedAppointments = await Appointment.find({
+      pet: pet._id,
+    }).populate("adopter", "name email");
+
+    const appointmentsToNotify = relatedAppointments.filter(
+      (appointment) =>
+        ["pending", "approved"].includes(appointment.status),
+    );
+
+    let adoptionEmailsSent = 0;
+    let appointmentEmailsSent = 0;
 
     /*
-      Send notifications before deleting the records.
-
-      Email failures do not prevent pet deletion.
+      Send adoption-related deletion emails.
     */
     for (const application of applicationsToNotify) {
       if (!application.adopter?.email) {
         continue;
       }
 
-      const isApproved = application.status === "approved";
+      const isApproved =
+        application.status === "approved";
 
       const subject = isApproved
         ? `Important update about your adoption of ${pet.name}`
@@ -377,14 +387,106 @@ const deletePet = async (req, res) => {
           html,
         });
 
-        emailsSent += 1;
+        adoptionEmailsSent += 1;
       } catch (emailError) {
         console.error(
-          `Failed to send deletion email to ${application.adopter.email}:`,
+          `Failed to send adoption deletion email to ${application.adopter.email}:`,
           emailError.message,
         );
       }
     }
+
+    /*
+      Send appointment cancellation emails caused by pet deletion.
+    */
+    for (const appointment of appointmentsToNotify) {
+      if (!appointment.adopter?.email) {
+        continue;
+      }
+
+      const formattedDate = new Date(
+        appointment.appointmentDate,
+      ).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+
+      try {
+        await sendEmail({
+          to: appointment.adopter.email,
+
+          subject: `Your PawBuddy appointment for ${pet.name} has been cancelled`,
+
+          text:
+            `Hello ${appointment.adopter.name},\n\n` +
+            `We are sorry to inform you that your ${appointment.visitType} appointment for ${pet.name} can no longer take place because this pet has been removed from PawBuddy.\n\n` +
+            `Appointment Date: ${formattedDate}\n` +
+            `Appointment Time: ${appointment.appointmentTime}\n\n` +
+            `The appointment has therefore been cancelled and removed from the system.\n\n` +
+            `Please contact the shelter if you need any further information.\n\n` +
+            `PawBuddy`,
+
+          html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+              <h2 style="color: #F28C7A;">
+                Appointment Cancelled
+              </h2>
+
+              <p>Hello ${appointment.adopter.name},</p>
+
+              <p>
+                We are sorry to inform you that your
+                <strong>${appointment.visitType}</strong>
+                appointment for
+                <strong>${pet.name}</strong>
+                can no longer take place because this pet has been removed
+                from PawBuddy.
+              </p>
+
+              <p>
+                <strong>Appointment Date:</strong> ${formattedDate}<br />
+                <strong>Appointment Time:</strong> ${appointment.appointmentTime}
+              </p>
+
+              <p>
+                The appointment has therefore been cancelled and removed
+                from the system.
+              </p>
+
+              <p>
+                Please contact the shelter if you need any further information.
+              </p>
+
+              <p style="color: #2F7D6D; font-weight: bold;">
+                PawBuddy
+              </p>
+            </div>
+          `,
+        });
+
+        appointmentEmailsSent += 1;
+      } catch (emailError) {
+        console.error(
+          `Failed to send appointment deletion email to ${appointment.adopter.email}:`,
+          emailError.message,
+        );
+      }
+    }
+
+    /*
+      Remove every appointment linked to this pet.
+
+      This includes:
+      - pending
+      - approved
+      - rejected
+      - completed
+      - cancelled
+    */
+    await Appointment.deleteMany({
+      pet: pet._id,
+    });
 
     // Delete all adoption records linked to this pet.
     await Adoption.deleteMany({
@@ -411,8 +513,11 @@ const deletePet = async (req, res) => {
     res.status(200).json({
       message: "Pet deleted successfully",
       affectedApplications: relatedApplications.length,
+      affectedAppointments: relatedAppointments.length,
       notifiedApplications: applicationsToNotify.length,
-      emailsSent,
+      notifiedAppointments: appointmentsToNotify.length,
+      adoptionEmailsSent,
+      appointmentEmailsSent,
     });
   } catch (error) {
     res.status(500).json({

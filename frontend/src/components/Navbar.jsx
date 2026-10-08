@@ -108,40 +108,86 @@ const Navbar = () => {
 
             {token && user && (
               <>
-                <Button component={Link} to="/profile" color="inherit">
+                <Button
+                  component={Link}
+                  to="/profile"
+                  color="inherit"
+                >
                   Profile
                 </Button>
 
                 {user.role === "adopter" && (
-                  <Button
-                    component={Link}
-                    to="/my-applications"
-                    color="inherit"
-                  >
-                    My Applications
-                  </Button>
+                  <>
+                    <Button
+                      component={Link}
+                      to="/my-applications"
+                      color="inherit"
+                    >
+                      My Applications
+                    </Button>
+
+                    <Button
+                      component={Link}
+                      to="/my-appointments"
+                      color="inherit"
+                    >
+                      My Appointments
+                    </Button>
+                  </>
                 )}
 
                 {user.role === "admin" && (
                   <>
-                    <Button component={Link} to="/admin" color="inherit">
+                    <Button
+                      component={Link}
+                      to="/admin"
+                      color="inherit"
+                    >
                       Admin Dashboard
                     </Button>
 
-                    <Button component={Link} to="/admin/users" color="inherit">
+                    <Button
+                      component={Link}
+                      to="/admin/users"
+                      color="inherit"
+                    >
                       Users
+                    </Button>
+
+                    <Button
+                      component={Link}
+                      to="/manage-appointments"
+                      color="inherit"
+                    >
+                      Manage Appointments
                     </Button>
                   </>
                 )}
 
                 {user.role === "staff" && (
                   <>
-                    <Button component={Link} to="/staff" color="inherit">
+                    <Button
+                      component={Link}
+                      to="/staff"
+                      color="inherit"
+                    >
                       Staff Dashboard
                     </Button>
 
-                    <Button component={Link} to="/staff/pets" color="inherit">
+                    <Button
+                      component={Link}
+                      to="/staff/pets"
+                      color="inherit"
+                    >
                       Manage Pets
+                    </Button>
+
+                    <Button
+                      component={Link}
+                      to="/manage-appointments"
+                      color="inherit"
+                    >
+                      Manage Appointments
                     </Button>
                   </>
                 )}
@@ -162,11 +208,19 @@ const Navbar = () => {
 
             {!token && (
               <>
-                <Button component={Link} to="/login" color="inherit">
+                <Button
+                  component={Link}
+                  to="/login"
+                  color="inherit"
+                >
                   Login
                 </Button>
 
-                <Button component={Link} to="/register" color="inherit">
+                <Button
+                  component={Link}
+                  to="/register"
+                  color="inherit"
+                >
                   Register
                 </Button>
               </>
@@ -203,11 +257,19 @@ const Navbar = () => {
                 horizontal: "right",
               }}
             >
-              <MenuItem component={Link} to="/" onClick={handleMenuClose}>
+              <MenuItem
+                component={Link}
+                to="/"
+                onClick={handleMenuClose}
+              >
                 Home
               </MenuItem>
 
-              <MenuItem component={Link} to="/pets" onClick={handleMenuClose}>
+              <MenuItem
+                component={Link}
+                to="/pets"
+                onClick={handleMenuClose}
+              >
                 Pets
               </MenuItem>
 
@@ -222,13 +284,23 @@ const Navbar = () => {
                   </MenuItem>
 
                   {user.role === "adopter" && (
-                    <MenuItem
-                      component={Link}
-                      to="/my-applications"
-                      onClick={handleMenuClose}
-                    >
-                      My Applications
-                    </MenuItem>
+                    <>
+                      <MenuItem
+                        component={Link}
+                        to="/my-applications"
+                        onClick={handleMenuClose}
+                      >
+                        My Applications
+                      </MenuItem>
+
+                      <MenuItem
+                        component={Link}
+                        to="/my-appointments"
+                        onClick={handleMenuClose}
+                      >
+                        My Appointments
+                      </MenuItem>
+                    </>
                   )}
 
                   {user.role === "admin" && (
@@ -247,6 +319,14 @@ const Navbar = () => {
                         onClick={handleMenuClose}
                       >
                         Users
+                      </MenuItem>
+
+                      <MenuItem
+                        component={Link}
+                        to="/manage-appointments"
+                        onClick={handleMenuClose}
+                      >
+                        Manage Appointments
                       </MenuItem>
                     </>
                   )}
@@ -267,6 +347,14 @@ const Navbar = () => {
                         onClick={handleMenuClose}
                       >
                         Manage Pets
+                      </MenuItem>
+
+                      <MenuItem
+                        component={Link}
+                        to="/manage-appointments"
+                        onClick={handleMenuClose}
+                      >
+                        Manage Appointments
                       </MenuItem>
                     </>
                   )}

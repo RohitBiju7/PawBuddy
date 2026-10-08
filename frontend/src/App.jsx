@@ -16,13 +16,15 @@ import CreateStaff from "./pages/admin/CreateStaff";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import ManagePets from "./pages/staff/ManagePets";
 
+import MyApplications from "./pages/adoptions/MyApplications";
+import ManageAdoptions from "./pages/adoptions/ManageAdoptions";
+
+import MyAppointments from "./pages/appointments/MyAppointments";
+import ManageAppointments from "./pages/appointments/ManageAppointments";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
-
 import Footer from "./components/Footer";
-import MyApplications from "./pages/adoptions/MyApplications";
-
-import ManageAdoptions from "./pages/adoptions/ManageAdoptions";
 
 const App = () => {
   return (
@@ -113,6 +115,24 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={["admin", "staff"]}>
                 <ManageAdoptions />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/my-appointments"
+            element={
+              <ProtectedRoute allowedRoles={["adopter"]}>
+                <MyAppointments />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/manage-appointments"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <ManageAppointments />
               </ProtectedRoute>
             }
           />

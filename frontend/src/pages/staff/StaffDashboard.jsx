@@ -54,8 +54,8 @@ const StaffDashboard = () => {
           </Typography>
 
           <Typography color="text.secondary">
-            Welcome, {user?.name || "Staff"}. Manage shelter pets and adoption
-            applications from here.
+            Welcome, {user?.name || "Staff"}. Manage shelter pets, adoption
+            applications and appointments from here.
           </Typography>
         </Box>
 
@@ -131,6 +131,32 @@ const StaffDashboard = () => {
                 <Typography color="text.secondary">
                   Review and manage adoption applications submitted by
                   adopters.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Manage Appointments */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Card
+              onClick={() => navigate("/manage-appointments")}
+              sx={cardStyle}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "secondary.main",
+                    fontWeight: 700,
+                    mb: 1,
+                  }}
+                >
+                  Manage Appointments
+                </Typography>
+
+                <Typography color="text.secondary">
+                  Review, approve and complete adoption and site visit
+                  appointments.
                 </Typography>
               </CardContent>
             </Card>

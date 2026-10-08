@@ -1,30 +1,37 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
+
 const userRoutes = require("./routes/userRoutes");
 const petRoutes = require("./routes/petRoutes");
-require("dotenv").config();
 const adoptionRoutes = require("./routes/adoptionRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
 
 const connectDB = require("./config/db");
-const path = require("path");
 
 const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 app.use("/api/users", userRoutes);
 app.use("/api/pets", petRoutes);
+app.use("/api/adoptions", adoptionRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
   res.send("PawBuddy API is running");
 });
-
-app.use("/api/adoptions", adoptionRoutes);
 
 const PORT = process.env.PORT || 5000;
 

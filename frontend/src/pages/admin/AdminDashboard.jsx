@@ -203,6 +203,40 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </Grid>
+
+          {/* Manage Appointments */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Card
+              onClick={() => navigate("/manage-appointments")}
+              sx={cardStyle}
+            >
+              <CardContent
+                sx={{
+                  p: 3,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "primary.main",
+                    fontWeight: 700,
+                    mb: 1,
+                  }}
+                >
+                  Manage Appointments
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
+                  Review, approve and complete adoption and site visit appointments.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
       </Container>
     </Box>
