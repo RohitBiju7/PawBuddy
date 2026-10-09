@@ -1,44 +1,65 @@
 const express = require("express");
+
 const {
   registerUser,
   loginUser,
   getProfile,
+  updateProfile,
   createStaff,
   getAllUsers,
-  updateUserStatus
+  updateUserStatus,
 } = require("../controllers/userController");
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+const {
+  protect,
+} = require("../middleware/authMiddleware");
+
+const {
+  authorizeRoles,
+} = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/profile", protect, getProfile);
 
-// Create Staff (only admin can create staff)
+// Get logged-in user's profile
+router.get(
+  "/profile",
+  protect,
+  getProfile,
+);
+
+// Update own profile - Adopter and Staff only
+router.patch(
+  "/profile",
+  protect,
+  authorizeRoles("adopter", "staff"),
+  updateProfile,
+);
+
+// Create Staff - Admin only
 router.post(
   "/staff",
   protect,
   authorizeRoles("admin"),
-  createStaff
+  createStaff,
 );
 
-// Get All Users (only admin can get all users)
+// Get All Users - Admin only
 router.get(
   "/",
   protect,
   authorizeRoles("admin"),
-  getAllUsers
+  getAllUsers,
 );
 
-// Update User Status (only admin can update user status)
+// Update User Status - Admin only
 router.patch(
   "/:id/status",
   protect,
   authorizeRoles("admin"),
-  updateUserStatus
+  updateUserStatus,
 );
 
 module.exports = router;

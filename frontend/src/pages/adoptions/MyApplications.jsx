@@ -20,10 +20,61 @@ import {
   cancelAdoption,
 } from "../../services/adoptionService";
 
+import {
+  createAdoptionFeeOrder,
+  verifyAdoptionFeePayment,
+  getAdoptionPaymentStatus,
+} from "../../services/paymentService";
+
 const MyApplications = () => {
   const [applications, setApplications] = useState([]);
+  const [paymentStatuses, setPaymentStatuses] = useState({});
   const [loading, setLoading] = useState(true);
+  const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const script = document.createElement("script");
+
+      script.src =
+        "https://checkout.razorpay.com/v1/checkout.js";
+
+      script.onload = () => {
+        resolve(true);
+      };
+
+      script.onerror = () => {
+        resolve(false);
+      };
+
+      document.body.appendChild(script);
+    });
+  };
+
+  const fetchPaymentStatus = async (applicationId) => {
+    try {
+      const data =
+        await getAdoptionPaymentStatus(applicationId);
+
+      setPaymentStatuses((current) => ({
+        ...current,
+        [applicationId]: data,
+      }));
+    } catch (error) {
+      console.error(
+        "Failed to load payment status:",
+        error,
+      );
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -32,7 +83,30 @@ const MyApplications = () => {
 
       const data = await getMyApplications();
 
-      setApplications(data.applications || []);
+      const applicationList =
+        data.applications || [];
+
+      setApplications(applicationList);
+
+      /*
+        Payment status is relevant once an application
+        has been approved or completed.
+      */
+      const paymentRelevantApplications =
+        applicationList.filter(
+          (application) =>
+            application.pet &&
+            ["approved", "completed"].includes(
+              application.status,
+            ),
+        );
+
+      await Promise.all(
+        paymentRelevantApplications.map(
+          (application) =>
+            fetchPaymentStatus(application._id),
+        ),
+      );
     } catch (error) {
       setError(
         error.response?.data?.message ||
@@ -56,6 +130,10 @@ const MyApplications = () => {
       return "error";
     }
 
+    if (status === "completed") {
+      return "info";
+    }
+
     return "warning";
   };
 
@@ -66,6 +144,10 @@ const MyApplications = () => {
 
     if (status === "pending") {
       return "warning";
+    }
+
+    if (status === "adopted") {
+      return "info";
     }
 
     return "default";
@@ -80,7 +162,10 @@ const MyApplications = () => {
       return "Unavailable";
     }
 
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    return (
+      status.charAt(0).toUpperCase() +
+      status.slice(1)
+    );
   };
 
   const handleCancel = async (applicationId) => {
@@ -94,12 +179,14 @@ const MyApplications = () => {
 
     try {
       setError("");
+      setSuccess("");
 
       await cancelAdoption(applicationId);
 
       setApplications((currentApplications) =>
         currentApplications.filter(
-          (application) => application._id !== applicationId,
+          (application) =>
+            application._id !== applicationId,
         ),
       );
     } catch (error) {
@@ -107,6 +194,155 @@ const MyApplications = () => {
         error.response?.data?.message ||
           "Failed to cancel adoption application.",
       );
+    }
+  };
+
+  const handlePayment = async (application) => {
+    try {
+      setPaymentLoadingId(application._id);
+      setError("");
+      setSuccess("");
+
+      /*
+        Load Razorpay Checkout only when the user
+        actually needs to make a payment.
+      */
+      const scriptLoaded =
+        await loadRazorpayScript();
+
+      if (!scriptLoaded) {
+        setError(
+          "Unable to load Razorpay. Please check your internet connection and try again.",
+        );
+
+        return;
+      }
+
+      /*
+        Ask our backend to create the order.
+
+        The backend determines the amount from the
+        pet document, so the frontend cannot alter it.
+      */
+      const orderData =
+        await createAdoptionFeeOrder(
+          application._id,
+        );
+
+      /*
+        Safety for ₹0 adoption fee.
+
+        Normally the UI will already know this from
+        the pet, but the backend is still the authority.
+      */
+      if (!orderData.paymentRequired) {
+        await fetchPaymentStatus(
+          application._id,
+        );
+
+        setSuccess(
+          "No adoption fee is required for this pet.",
+        );
+
+        return;
+      }
+
+      const user = JSON.parse(
+        localStorage.getItem("user"),
+      );
+
+      const options = {
+        key: orderData.keyId,
+
+        amount: orderData.order.amount,
+
+        currency: orderData.order.currency,
+
+        name: "PawBuddy",
+
+        description: `Adoption fee for ${
+          application.pet?.name || "pet adoption"
+        }`,
+
+        order_id: orderData.order.id,
+
+        handler: async (response) => {
+          try {
+            setPaymentLoadingId(
+              application._id,
+            );
+
+            await verifyAdoptionFeePayment({
+              razorpay_order_id:
+                response.razorpay_order_id,
+
+              razorpay_payment_id:
+                response.razorpay_payment_id,
+
+              razorpay_signature:
+                response.razorpay_signature,
+            });
+
+            await fetchPaymentStatus(
+              application._id,
+            );
+
+            setSuccess(
+              `Adoption fee for ${
+                application.pet?.name ||
+                "your pet"
+              } was paid successfully.`,
+            );
+          } catch (error) {
+            setError(
+              error.response?.data?.message ||
+                "Payment verification failed.",
+            );
+          } finally {
+            setPaymentLoadingId(null);
+          }
+        },
+
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+
+        theme: {
+          color: "#2F7D6D",
+        },
+
+        modal: {
+          ondismiss: () => {
+            setPaymentLoadingId(null);
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(
+        options,
+      );
+
+      razorpay.on(
+        "payment.failed",
+        (response) => {
+          setError(
+            response.error?.description ||
+              "Payment failed. Please try again.",
+          );
+
+          setPaymentLoadingId(null);
+        },
+      );
+
+      razorpay.open();
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+          "Failed to start payment.",
+      );
+
+      setPaymentLoadingId(null);
     }
   };
 
@@ -145,6 +381,12 @@ const MyApplications = () => {
           </Alert>
         )}
 
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }}>
+            {success}
+          </Alert>
+        )}
+
         {loading ? (
           <Stack
             alignItems="center"
@@ -159,6 +401,17 @@ const MyApplications = () => {
           <Grid container spacing={3}>
             {applications.map((application) => {
               const pet = application.pet;
+
+              const paymentStatus =
+                paymentStatuses[
+                  application._id
+                ];
+
+              const paymentRequired =
+                pet?.adoptionFee > 0;
+
+              const isPaid =
+                paymentStatus?.paid === true;
 
               return (
                 <Grid
@@ -198,7 +451,8 @@ const MyApplications = () => {
                           backgroundColor: "#EAF4F1",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent:
+                            "center",
                         }}
                       >
                         <Typography color="text.secondary">
@@ -222,10 +476,14 @@ const MyApplications = () => {
                           mb: 2,
                         }}
                       >
-                        {pet?.name || "Pet unavailable"}
+                        {pet?.name ||
+                          "Pet unavailable"}
                       </Typography>
 
-                      <Stack spacing={1.5} sx={{ mb: 2 }}>
+                      <Stack
+                        spacing={1.5}
+                        sx={{ mb: 2 }}
+                      >
                         <Box>
                           <Typography
                             variant="body2"
@@ -236,13 +494,16 @@ const MyApplications = () => {
                           </Typography>
 
                           <Chip
-                            label={application.status}
+                            label={
+                              application.status
+                            }
                             color={getApplicationStatusColor(
                               application.status,
                             )}
                             size="small"
                             sx={{
-                              textTransform: "capitalize",
+                              textTransform:
+                                "capitalize",
                               fontWeight: 600,
                             }}
                           />
@@ -259,8 +520,12 @@ const MyApplications = () => {
                             </Typography>
 
                             <Chip
-                              label={getPetStatusLabel(pet.status)}
-                              color={getPetStatusColor(pet.status)}
+                              label={getPetStatusLabel(
+                                pet.status,
+                              )}
+                              color={getPetStatusColor(
+                                pet.status,
+                              )}
                               size="small"
                               sx={{
                                 fontWeight: 600,
@@ -276,22 +541,32 @@ const MyApplications = () => {
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Species:</strong> {pet.species}
+                            <strong>
+                              Species:
+                            </strong>{" "}
+                            {pet.species}
                           </Typography>
 
                           <Typography
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Breed:</strong> {pet.breed}
+                            <strong>
+                              Breed:
+                            </strong>{" "}
+                            {pet.breed}
                           </Typography>
 
                           <Typography
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Adoption Fee:</strong> ₹
-                            {pet.adoptionFee}
+                            <strong>
+                              Adoption Fee:
+                            </strong>{" "}
+                            {pet.adoptionFee === 0
+                              ? "Free"
+                              : `₹${pet.adoptionFee}`}
                           </Typography>
                         </Stack>
                       )}
@@ -301,7 +576,8 @@ const MyApplications = () => {
                           sx={{
                             mt: 2,
                             p: 2,
-                            backgroundColor: "#F7FAF9",
+                            backgroundColor:
+                              "#F7FAF9",
                             borderRadius: 2,
                           }}
                         >
@@ -309,7 +585,9 @@ const MyApplications = () => {
                             variant="body2"
                             color="text.secondary"
                           >
-                            <strong>Your message:</strong>
+                            <strong>
+                              Your message:
+                            </strong>
                           </Typography>
 
                           <Typography
@@ -325,31 +603,140 @@ const MyApplications = () => {
                         </Box>
                       )}
 
-                      {application.status === "approved" && (
-                        <Alert
-                          severity="success"
-                          sx={{
-                            mt: 2,
-                          }}
-                        >
-                          Your adoption application has been approved.
-                          {pet?.status === "pending" &&
-                            ` ${pet.name} is now reserved for you.`}
-                        </Alert>
+                      {application.status ===
+                        "approved" && (
+                        <>
+                          <Alert
+                            severity="success"
+                            sx={{
+                              mt: 2,
+                            }}
+                          >
+                            Your adoption
+                            application has been
+                            approved.
+                            {pet?.status ===
+                              "pending" &&
+                              ` ${pet.name} is now reserved for you.`}
+                          </Alert>
+
+                          {pet && (
+                            <Box
+                              sx={{
+                                mt: 2,
+                                p: 2,
+                                borderRadius: 2,
+                                backgroundColor:
+                                  "#F7FAF9",
+                                border:
+                                  "1px solid",
+                                borderColor:
+                                  "divider",
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  fontWeight: 700,
+                                  mb: 1,
+                                }}
+                              >
+                                Adoption Fee
+                              </Typography>
+
+                              {!paymentRequired ? (
+                                <Alert severity="info">
+                                  This pet has no
+                                  adoption fee. No
+                                  payment is required.
+                                </Alert>
+                              ) : isPaid ? (
+                                <Alert severity="success">
+                                  Adoption fee of ₹
+                                  {pet.adoptionFee} has
+                                  been paid
+                                  successfully.
+                                </Alert>
+                              ) : (
+                                <>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                      mb: 1.5,
+                                    }}
+                                  >
+                                    Adoption Fee:{" "}
+                                    <strong>
+                                      ₹
+                                      {
+                                        pet.adoptionFee
+                                      }
+                                    </strong>
+                                  </Typography>
+
+                                  <Button
+                                    variant="contained"
+                                    fullWidth
+                                    disabled={
+                                      paymentLoadingId ===
+                                      application._id
+                                    }
+                                    onClick={() =>
+                                      handlePayment(
+                                        application,
+                                      )
+                                    }
+                                    sx={{
+                                      textTransform:
+                                        "none",
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {paymentLoadingId ===
+                                    application._id
+                                      ? "Starting Payment..."
+                                      : `Pay ₹${pet.adoptionFee}`}
+                                  </Button>
+                                </>
+                              )}
+                            </Box>
+                          )}
+                        </>
                       )}
 
-                      {application.status === "rejected" && (
+                      {application.status ===
+                        "rejected" && (
                         <Alert
                           severity="error"
                           sx={{
                             mt: 2,
                           }}
                         >
-                          This adoption application was rejected.
+                          This adoption application
+                          was rejected.
                         </Alert>
                       )}
 
-                      <Box sx={{ mt: "auto", pt: 3 }}>
+                      {application.status ===
+                        "completed" && (
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mt: 2,
+                          }}
+                        >
+                          This adoption has been
+                          completed.
+                        </Alert>
+                      )}
+
+                      <Box
+                        sx={{
+                          mt: "auto",
+                          pt: 3,
+                        }}
+                      >
                         {pet && (
                           <Button
                             component={Link}
@@ -365,13 +752,16 @@ const MyApplications = () => {
                           </Button>
                         )}
 
-                        {application.status === "pending" && (
+                        {application.status ===
+                          "pending" && (
                           <Button
                             variant="outlined"
                             color="error"
                             fullWidth
                             onClick={() =>
-                              handleCancel(application._id)
+                              handleCancel(
+                                application._id,
+                              )
                             }
                             sx={{
                               mt: 1.5,
@@ -410,7 +800,8 @@ const MyApplications = () => {
                     color="text.secondary"
                     sx={{ mb: 3 }}
                   >
-                    Browse available pets and submit your first adoption
+                    Browse available pets and
+                    submit your first adoption
                     application.
                   </Typography>
 

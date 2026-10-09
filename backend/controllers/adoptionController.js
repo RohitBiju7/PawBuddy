@@ -1,5 +1,6 @@
 const Adoption = require("../models/adoptionModel");
 const Pet = require("../models/petModel");
+const Payment = require("../models/paymentModel");
 const sendEmail = require("../utils/sendEmail");
 
 const sendAdoptionRejectionEmail = async ({
@@ -317,7 +318,6 @@ const updateApplicationStatus = async (
 
     /*
       Notify automatically rejected adopters.
-
       Email failures should not undo the approval.
     */
     let rejectionEmailsSent = 0;
@@ -384,9 +384,7 @@ const updateApplicationStatus = async (
 
               <p>
                 Please book an
-                <strong>
-                  adoption appointment
-                </strong>
+                <strong>adoption appointment</strong>
                 through PawBuddy to continue
                 the adoption process.
               </p>
@@ -394,24 +392,16 @@ const updateApplicationStatus = async (
               <p>
                 You can book the appointment
                 from the
-                <strong>
-                  My Appointments
-                </strong>
+                <strong>My Appointments</strong>
                 section after logging into
                 your PawBuddy account.
               </p>
 
               <p>
-                Thank you for choosing
-                PawBuddy!
+                Thank you for choosing PawBuddy!
               </p>
 
-              <p
-                style="
-                  color: #2F7D6D;
-                  font-weight: bold;
-                "
-              >
+              <p style="color: #2F7D6D; font-weight: bold;">
                 PawBuddy
               </p>
             </div>
@@ -482,6 +472,35 @@ const completeAdoption = async (
         message:
           "This pet is not currently reserved for an approved adoption",
       });
+    }
+
+    /*
+      Adoption fee payment check.
+
+      Free pets:
+      adoptionFee === 0
+      → no payment required.
+
+      Paid pets:
+      adoptionFee > 0
+      → a verified Payment document with status "paid"
+        must exist before the adoption can be completed.
+    */
+    if (pet.adoptionFee > 0) {
+      const payment = await Payment.findOne({
+        adoption: adoption._id,
+        adopter: adoption.adopter,
+        pet: pet._id,
+        paymentType: "adoption_fee",
+        status: "paid",
+      });
+
+      if (!payment) {
+        return res.status(400).json({
+          message:
+            "The adoption fee must be paid before this adoption can be marked as completed",
+        });
+      }
     }
 
     adoption.status = "completed";

@@ -7,6 +7,8 @@ const userRoutes = require("./routes/userRoutes");
 const petRoutes = require("./routes/petRoutes");
 const adoptionRoutes = require("./routes/adoptionRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const connectDB = require("./config/db");
 
@@ -20,14 +22,20 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(express.json());
 
 app.use("/api/users", userRoutes);
 app.use("/api/pets", petRoutes);
 app.use("/api/adoptions", adoptionRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads")),
+);
 
 app.get("/", (req, res) => {
   res.send("PawBuddy API is running");

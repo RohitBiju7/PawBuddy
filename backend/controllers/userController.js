@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-//Register User
+// Register User
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -27,7 +27,9 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email,
+    });
 
     if (existingUser) {
       return res.status(400).json({
@@ -35,7 +37,10 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10,
+    );
 
     const user = await User.create({
       name,
@@ -47,6 +52,7 @@ const registerUser = async (req, res) => {
 
     res.status(201).json({
       message: "Registration successful",
+
       user: {
         id: user._id,
         name: user.name,
@@ -63,7 +69,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-//Login User
+// Login User
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -74,7 +80,9 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      email,
+    });
 
     if (!user) {
       return res.status(401).json({
@@ -82,7 +90,10 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password,
+    );
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -92,7 +103,8 @@ const loginUser = async (req, res) => {
 
     if (!user.isActive) {
       return res.status(403).json({
-        message: "Your account has been deactivated",
+        message:
+          "Your account has been deactivated",
       });
     }
 
@@ -110,6 +122,7 @@ const loginUser = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
+
       user: {
         id: user._id,
         name: user.name,
@@ -126,100 +139,243 @@ const loginUser = async (req, res) => {
   }
 };
 
-
-//Get User Profile (check authMiddleware.js for the protect middleware)
+// Get User Profile
 const getProfile = async (req, res) => {
   try {
     res.status(200).json({
-      user: req.user
+      user: req.user,
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-//Create Shelter Staff (only admin can create staff accounts)
-const createStaff = async (req, res) => {
+// Update own profile - Adopter and Staff only
+const updateProfile = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    /*
+      Admin profile editing is intentionally disabled.
 
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        message: "Name, email and password are required"
+      Only adopter and staff accounts can edit
+      their own profile through this endpoint.
+    */
+    if (
+      !["adopter", "staff"].includes(req.user.role)
+    ) {
+      return res.status(403).json({
+        message:
+          "Profile editing is only available for adopters and shelter staff",
       });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const {
+      name,
+      email,
+      phone,
+    } = req.body;
+
+    /*
+      Require the main profile fields.
+
+      Phone remains optional because it was already
+      optional during registration/staff creation.
+    */
+    if (
+      !name ||
+      !name.trim() ||
+      !email ||
+      !email.trim()
+    ) {
+      return res.status(400).json({
+        message:
+          "Name and email are required",
+      });
+    }
+
+    const normalizedEmail =
+      email.trim().toLowerCase();
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        message:
+          "Please enter a valid email address",
+      });
+    }
+
+    /*
+      Check whether another user already owns
+      the requested email address.
+
+      $ne excludes the currently logged-in user.
+    */
+    const existingUser =
+      await User.findOne({
+        email: normalizedEmail,
+
+        _id: {
+          $ne: req.user._id,
+        },
+      });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message:
+          "Another user is already using this email address",
+      });
+    }
+
+    const user = await User.findById(
+      req.user._id,
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    /*
+      Only these fields can be changed.
+
+      We deliberately do NOT read role, isActive
+      or password from req.body.
+    */
+    user.name = name.trim();
+    user.email = normalizedEmail;
+    user.phone =
+      phone !== undefined
+        ? String(phone).trim()
+        : user.phone;
+
+    await user.save();
+
+    res.status(200).json({
+      message:
+        "Profile updated successfully",
+
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isActive: user.isActive,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+// Create Shelter Staff
+const createStaff = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      phone,
+    } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message:
+          "Name, email and password are required",
+      });
+    }
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
       return res.status(400).json({
-        message: "Please enter a valid email address"
+        message:
+          "Please enter a valid email address",
       });
     }
 
     if (password.length < 6) {
       return res.status(400).json({
-        message: "Password must be at least 6 characters"
+        message:
+          "Password must be at least 6 characters",
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser =
+      await User.findOne({
+        email,
+      });
 
     if (existingUser) {
       return res.status(400).json({
-        message: "User with this email already exists"
+        message:
+          "User with this email already exists",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword =
+      await bcrypt.hash(
+        password,
+        10,
+      );
 
     const staff = await User.create({
       name,
       email,
       password: hashedPassword,
       phone,
-      role: "staff"
+      role: "staff",
     });
 
     res.status(201).json({
-      message: "Shelter staff account created successfully",
+      message:
+        "Shelter staff account created successfully",
+
       staff: {
         id: staff._id,
         name: staff.name,
         email: staff.email,
         phone: staff.phone,
         role: staff.role,
-        isActive: staff.isActive
-      }
+        isActive: staff.isActive,
+      },
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-//Get All Users (only admin can view all users)
+// Get All Users
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find().select(
+      "-password",
+    );
 
     res.status(200).json({
-      users
+      users,
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// Update User Status (only admin can update user status)
+// Update User Status
 const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -227,7 +383,8 @@ const updateUserStatus = async (req, res) => {
 
     if (typeof isActive !== "boolean") {
       return res.status(400).json({
-        message: "isActive must be true or false"
+        message:
+          "isActive must be true or false",
       });
     }
 
@@ -235,13 +392,17 @@ const updateUserStatus = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    if (user._id.toString() === req.user._id.toString()) {
+    if (
+      user._id.toString() ===
+      req.user._id.toString()
+    ) {
       return res.status(400).json({
-        message: "You cannot change your own account status"
+        message:
+          "You cannot change your own account status",
       });
     }
 
@@ -250,19 +411,24 @@ const updateUserStatus = async (req, res) => {
     await user.save();
 
     res.status(200).json({
-      message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+      message: `User ${
+        isActive
+          ? "activated"
+          : "deactivated"
+      } successfully`,
+
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        isActive: user.isActive
-      }
+        isActive: user.isActive,
+      },
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -271,7 +437,8 @@ module.exports = {
   registerUser,
   loginUser,
   getProfile,
+  updateProfile,
   createStaff,
   getAllUsers,
-  updateUserStatus
+  updateUserStatus,
 };

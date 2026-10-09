@@ -50,7 +50,8 @@ const addPet = async (req, res) => {
       removeUploadedFile(req.file);
 
       return res.status(400).json({
-        message: "Please provide all required pet details",
+        message:
+          "Please provide all required pet details",
       });
     }
 
@@ -86,7 +87,12 @@ const addPet = async (req, res) => {
 // Get all pets with optional filters and search
 const getAllPets = async (req, res) => {
   try {
-    const { species, gender, status, search } = req.query;
+    const {
+      species,
+      gender,
+      status,
+      search,
+    } = req.query;
 
     const filter = {};
 
@@ -135,7 +141,9 @@ const getAllPets = async (req, res) => {
 // Get a single pet by ID
 const getPetById = async (req, res) => {
   try {
-    const pet = await Pet.findById(req.params.id);
+    const pet = await Pet.findById(
+      req.params.id,
+    );
 
     if (!pet) {
       return res.status(404).json({
@@ -157,7 +165,9 @@ const getPetById = async (req, res) => {
 // Update a pet by ID
 const updatePet = async (req, res) => {
   try {
-    const pet = await Pet.findById(req.params.id);
+    const pet = await Pet.findById(
+      req.params.id,
+    );
 
     if (!pet) {
       removeUploadedFile(req.file);
@@ -168,8 +178,8 @@ const updatePet = async (req, res) => {
     }
 
     /*
-      Once a pet enters the adoption process, its details
-      should no longer be editable.
+      Once a pet enters the adoption process,
+      its details should no longer be editable.
 
       available = editable
       pending   = locked
@@ -185,8 +195,8 @@ const updatePet = async (req, res) => {
     }
 
     /*
-      Status itself can never be manually changed through
-      the normal pet update endpoint.
+      Pet adoption status cannot be manually
+      changed through the normal update endpoint.
     */
     if (
       req.body.status !== undefined &&
@@ -219,7 +229,8 @@ const updatePet = async (req, res) => {
     });
 
     if (req.file) {
-      const newImageFilename = req.file.filename;
+      const newImageFilename =
+        req.file.filename;
 
       if (pet.image) {
         const oldImagePath = path.join(
@@ -256,7 +267,9 @@ const updatePet = async (req, res) => {
 // Delete a pet by ID
 const deletePet = async (req, res) => {
   try {
-    const pet = await Pet.findById(req.params.id);
+    const pet = await Pet.findById(
+      req.params.id,
+    );
 
     if (!pet) {
       return res.status(404).json({
@@ -265,33 +278,55 @@ const deletePet = async (req, res) => {
     }
 
     /*
-      Find adoption applications before deletion so
-      affected adopters can be notified.
-    */
-    const relatedApplications = await Adoption.find({
-      pet: pet._id,
-    }).populate("adopter", "name email");
+      Find adoption applications before deletion
+      so affected adopters can be notified.
 
-    const applicationsToNotify = relatedApplications.filter(
-      (application) =>
-        ["pending", "approved"].includes(application.status),
-    );
+      Completed adoption records are historical
+      records and must NOT be deleted.
+    */
+    const relatedApplications =
+      await Adoption.find({
+        pet: pet._id,
+      }).populate(
+        "adopter",
+        "name email",
+      );
+
+    const applicationsToNotify =
+      relatedApplications.filter(
+        (application) =>
+          ["pending", "approved"].includes(
+            application.status,
+          ),
+      );
+
+    const completedAdoptions =
+      relatedApplications.filter(
+        (application) =>
+          application.status === "completed",
+      );
 
     /*
       Find appointments linked to the pet before deletion.
 
-      Pending and approved appointments are active appointments,
-      so those adopters should be informed that the appointment
-      can no longer take place.
+      Pending and approved appointments are active,
+      so those adopters should be informed.
     */
-    const relatedAppointments = await Appointment.find({
-      pet: pet._id,
-    }).populate("adopter", "name email");
+    const relatedAppointments =
+      await Appointment.find({
+        pet: pet._id,
+      }).populate(
+        "adopter",
+        "name email",
+      );
 
-    const appointmentsToNotify = relatedAppointments.filter(
-      (appointment) =>
-        ["pending", "approved"].includes(appointment.status),
-    );
+    const appointmentsToNotify =
+      relatedAppointments.filter(
+        (appointment) =>
+          ["pending", "approved"].includes(
+            appointment.status,
+          ),
+      );
 
     let adoptionEmailsSent = 0;
     let appointmentEmailsSent = 0;
@@ -397,7 +432,8 @@ const deletePet = async (req, res) => {
     }
 
     /*
-      Send appointment cancellation emails caused by pet deletion.
+      Send appointment cancellation emails caused
+      by pet deletion.
     */
     for (const appointment of appointmentsToNotify) {
       if (!appointment.adopter?.email) {
@@ -475,25 +511,45 @@ const deletePet = async (req, res) => {
     }
 
     /*
-      Remove every appointment linked to this pet.
+      Appointments are operational records.
 
-      This includes:
-      - pending
-      - approved
-      - rejected
-      - completed
-      - cancelled
+      Since the pet itself is being permanently removed,
+      remove its appointments after notifying anyone with
+      an active appointment.
     */
     await Appointment.deleteMany({
       pet: pet._id,
     });
 
-    // Delete all adoption records linked to this pet.
-    await Adoption.deleteMany({
-      pet: pet._id,
-    });
+    /*
+      IMPORTANT:
+      Preserve completed adoption records because they
+      represent historical successful adoptions.
 
-    // Delete the pet image from the uploads folder.
+      Delete only non-completed adoption records:
+      - pending
+      - approved
+      - rejected
+
+      This means deleting an adopted pet will NOT reduce
+      the Successful Adoptions statistic later.
+    */
+    const deletedApplications =
+      await Adoption.deleteMany({
+        pet: pet._id,
+        status: {
+          $ne: "completed",
+        },
+      });
+
+    /*
+      Payment records are intentionally NOT deleted here.
+
+      A successful payment is financial history and must
+      remain recorded even if the pet is later removed.
+    */
+
+    // Delete the pet image from uploads.
     if (pet.image) {
       const imagePath = path.join(
         __dirname,
@@ -507,15 +563,30 @@ const deletePet = async (req, res) => {
       }
     }
 
-    // Permanently delete the pet from MongoDB.
+    // Permanently delete the pet document.
     await pet.deleteOne();
 
     res.status(200).json({
       message: "Pet deleted successfully",
-      affectedApplications: relatedApplications.length,
-      affectedAppointments: relatedAppointments.length,
-      notifiedApplications: applicationsToNotify.length,
-      notifiedAppointments: appointmentsToNotify.length,
+
+      affectedApplications:
+        relatedApplications.length,
+
+      deletedApplications:
+        deletedApplications.deletedCount,
+
+      preservedCompletedAdoptions:
+        completedAdoptions.length,
+
+      affectedAppointments:
+        relatedAppointments.length,
+
+      notifiedApplications:
+        applicationsToNotify.length,
+
+      notifiedAppointments:
+        appointmentsToNotify.length,
+
       adoptionEmailsSent,
       appointmentEmailsSent,
     });
