@@ -9,6 +9,7 @@ const adoptionRoutes = require("./routes/adoptionRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const complaintRoutes = require("./routes/complaintRoutes");
 
 const connectDB = require("./config/db");
 
@@ -31,6 +32,7 @@ app.use("/api/adoptions", adoptionRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/complaints", complaintRoutes);
 
 app.use(
   "/uploads",

@@ -1,5 +1,9 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -12,6 +16,7 @@ import PetDetails from "./pages/pets/PetDetails";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import CreateStaff from "./pages/admin/CreateStaff";
+import ManageComplaints from "./pages/admin/ManageComplaints";
 
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import ManagePets from "./pages/staff/ManagePets";
@@ -21,6 +26,8 @@ import ManageAdoptions from "./pages/adoptions/ManageAdoptions";
 
 import MyAppointments from "./pages/appointments/MyAppointments";
 import ManageAppointments from "./pages/appointments/ManageAppointments";
+
+import MyComplaints from "./pages/complaints/MyComplaints";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -46,7 +53,7 @@ const App = () => {
           <Route path="/pets" element={<PetList />} />
           <Route path="/pets/:id" element={<PetDetails />} />
 
-          {/* Protected routes */}
+          {/* Profile */}
           <Route
             path="/profile"
             element={
@@ -56,6 +63,7 @@ const App = () => {
             }
           />
 
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -84,9 +92,21 @@ const App = () => {
           />
 
           <Route
+            path="/admin/complaints"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ManageComplaints />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Staff */}
+          <Route
             path="/staff"
             element={
-              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <ProtectedRoute
+                allowedRoles={["staff", "admin"]}
+              >
                 <StaffDashboard />
               </ProtectedRoute>
             }
@@ -95,12 +115,15 @@ const App = () => {
           <Route
             path="/staff/pets"
             element={
-              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <ProtectedRoute
+                allowedRoles={["staff", "admin"]}
+              >
                 <ManagePets />
               </ProtectedRoute>
             }
           />
 
+          {/* Adoption */}
           <Route
             path="/my-applications"
             element={
@@ -113,12 +136,15 @@ const App = () => {
           <Route
             path="/manage-adoptions"
             element={
-              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+              <ProtectedRoute
+                allowedRoles={["admin", "staff"]}
+              >
                 <ManageAdoptions />
               </ProtectedRoute>
             }
           />
 
+          {/* Appointments */}
           <Route
             path="/my-appointments"
             element={
@@ -131,8 +157,20 @@ const App = () => {
           <Route
             path="/manage-appointments"
             element={
-              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+              <ProtectedRoute
+                allowedRoles={["admin", "staff"]}
+              >
                 <ManageAppointments />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Complaints / Reports */}
+          <Route
+            path="/my-complaints"
+            element={
+              <ProtectedRoute allowedRoles={["adopter"]}>
+                <MyComplaints />
               </ProtectedRoute>
             }
           />

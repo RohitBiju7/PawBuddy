@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 
 import {
   AppBar,
@@ -20,15 +23,25 @@ import pawBuddyLogo from "../assets/pawbuddy-logo.png";
 const Navbar = () => {
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
+  const token =
+    localStorage.getItem("token");
 
-  const storedUser = localStorage.getItem("user");
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const storedUser =
+    localStorage.getItem("user");
 
-  const [anchorEl, setAnchorEl] = useState(null);
+  const user = storedUser
+    ? JSON.parse(storedUser)
+    : null;
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+  const [anchorEl, setAnchorEl] =
+    useState(null);
+
+  const handleMenuOpen = (
+    event,
+  ) => {
+    setAnchorEl(
+      event.currentTarget,
+    );
   };
 
   const handleMenuClose = () => {
@@ -36,10 +49,16 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem(
+      "token",
+    );
+
+    localStorage.removeItem(
+      "user",
+    );
 
     handleMenuClose();
+
     navigate("/login");
   };
 
@@ -48,8 +67,10 @@ const Navbar = () => {
       position="sticky"
       elevation={0}
       sx={{
-        backgroundColor: "background.paper",
-        borderBottom: "1px solid",
+        backgroundColor:
+          "background.paper",
+        borderBottom:
+          "1px solid",
         borderColor: "divider",
         color: "text.primary",
       }}
@@ -59,7 +80,8 @@ const Navbar = () => {
           disableGutters
           sx={{
             minHeight: "70px",
-            justifyContent: "space-between",
+            justifyContent:
+              "space-between",
           }}
         >
           {/* Logo */}
@@ -69,7 +91,8 @@ const Navbar = () => {
             sx={{
               display: "flex",
               alignItems: "center",
-              textDecoration: "none",
+              textDecoration:
+                "none",
             }}
           >
             <Box
@@ -82,7 +105,8 @@ const Navbar = () => {
                   sm: 48,
                 },
                 width: "auto",
-                objectFit: "contain",
+                objectFit:
+                  "contain",
               }}
             />
           </Box>
@@ -94,15 +118,24 @@ const Navbar = () => {
                 xs: "none",
                 md: "flex",
               },
-              alignItems: "center",
+              alignItems:
+                "center",
               gap: 1,
             }}
           >
-            <Button component={Link} to="/" color="inherit">
+            <Button
+              component={Link}
+              to="/"
+              color="inherit"
+            >
               Home
             </Button>
 
-            <Button component={Link} to="/pets" color="inherit">
+            <Button
+              component={Link}
+              to="/pets"
+              color="inherit"
+            >
               Pets
             </Button>
 
@@ -116,7 +149,8 @@ const Navbar = () => {
                   Profile
                 </Button>
 
-                {user.role === "adopter" && (
+                {user.role ===
+                  "adopter" && (
                   <>
                     <Button
                       component={Link}
@@ -133,10 +167,19 @@ const Navbar = () => {
                     >
                       My Appointments
                     </Button>
+
+                    <Button
+                      component={Link}
+                      to="/my-complaints"
+                      color="inherit"
+                    >
+                      My Feedback
+                    </Button>
                   </>
                 )}
 
-                {user.role === "admin" && (
+                {user.role ===
+                  "admin" && (
                   <>
                     <Button
                       component={Link}
@@ -161,10 +204,19 @@ const Navbar = () => {
                     >
                       Manage Appointments
                     </Button>
+
+                    <Button
+                      component={Link}
+                      to="/admin/complaints"
+                      color="inherit"
+                    >
+                      Manage Feedback
+                    </Button>
                   </>
                 )}
 
-                {user.role === "staff" && (
+                {user.role ===
+                  "staff" && (
                   <>
                     <Button
                       component={Link}
@@ -193,10 +245,14 @@ const Navbar = () => {
                 )}
 
                 <Button
-                  onClick={handleLogout}
+                  onClick={
+                    handleLogout
+                  }
                   variant="text"
                   color="inherit"
-                  startIcon={<LogoutIcon />}
+                  startIcon={
+                    <LogoutIcon />
+                  }
                   sx={{
                     fontWeight: 600,
                   }}
@@ -237,7 +293,9 @@ const Navbar = () => {
             }}
           >
             <IconButton
-              onClick={handleMenuOpen}
+              onClick={
+                handleMenuOpen
+              }
               color="inherit"
               aria-label="open navigation menu"
             >
@@ -246,21 +304,29 @@ const Navbar = () => {
 
             <Menu
               anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
+              open={Boolean(
+                anchorEl,
+              )}
+              onClose={
+                handleMenuClose
+              }
               anchorOrigin={{
                 vertical: "bottom",
-                horizontal: "right",
+                horizontal:
+                  "right",
               }}
               transformOrigin={{
                 vertical: "top",
-                horizontal: "right",
+                horizontal:
+                  "right",
               }}
             >
               <MenuItem
                 component={Link}
                 to="/"
-                onClick={handleMenuClose}
+                onClick={
+                  handleMenuClose
+                }
               >
                 Home
               </MenuItem>
@@ -268,7 +334,9 @@ const Navbar = () => {
               <MenuItem
                 component={Link}
                 to="/pets"
-                onClick={handleMenuClose}
+                onClick={
+                  handleMenuClose
+                }
               >
                 Pets
               </MenuItem>
@@ -278,89 +346,159 @@ const Navbar = () => {
                   <MenuItem
                     component={Link}
                     to="/profile"
-                    onClick={handleMenuClose}
+                    onClick={
+                      handleMenuClose
+                    }
                   >
                     Profile
                   </MenuItem>
 
-                  {user.role === "adopter" && (
+                  {user.role ===
+                    "adopter" && (
                     <>
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/my-applications"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         My Applications
                       </MenuItem>
 
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/my-appointments"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         My Appointments
+                      </MenuItem>
+
+                      <MenuItem
+                        component={
+                          Link
+                        }
+                        to="/my-complaints"
+                        onClick={
+                          handleMenuClose
+                        }
+                      >
+                        My Feedback
                       </MenuItem>
                     </>
                   )}
 
-                  {user.role === "admin" && (
+                  {user.role ===
+                    "admin" && (
                     <>
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/admin"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         Admin Dashboard
                       </MenuItem>
 
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/admin/users"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         Users
                       </MenuItem>
 
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/manage-appointments"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         Manage Appointments
+                      </MenuItem>
+
+                      <MenuItem
+                        component={
+                          Link
+                        }
+                        to="/admin/complaints"
+                        onClick={
+                          handleMenuClose
+                        }
+                      >
+                        Manage Feedback
                       </MenuItem>
                     </>
                   )}
 
-                  {user.role === "staff" && (
+                  {user.role ===
+                    "staff" && (
                     <>
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/staff"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         Staff Dashboard
                       </MenuItem>
 
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/staff/pets"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         Manage Pets
                       </MenuItem>
 
                       <MenuItem
-                        component={Link}
+                        component={
+                          Link
+                        }
                         to="/manage-appointments"
-                        onClick={handleMenuClose}
+                        onClick={
+                          handleMenuClose
+                        }
                       >
                         Manage Appointments
                       </MenuItem>
                     </>
                   )}
 
-                  <MenuItem onClick={handleLogout}>
-                    <LogoutIcon sx={{ mr: 1.5 }} />
+                  <MenuItem
+                    onClick={
+                      handleLogout
+                    }
+                  >
+                    <LogoutIcon
+                      sx={{
+                        mr: 1.5,
+                      }}
+                    />
+
                     Logout
                   </MenuItem>
                 </>
@@ -371,7 +509,9 @@ const Navbar = () => {
                   <MenuItem
                     component={Link}
                     to="/login"
-                    onClick={handleMenuClose}
+                    onClick={
+                      handleMenuClose
+                    }
                   >
                     Login
                   </MenuItem>
@@ -379,7 +519,9 @@ const Navbar = () => {
                   <MenuItem
                     component={Link}
                     to="/register"
-                    onClick={handleMenuClose}
+                    onClick={
+                      handleMenuClose
+                    }
                   >
                     Register
                   </MenuItem>

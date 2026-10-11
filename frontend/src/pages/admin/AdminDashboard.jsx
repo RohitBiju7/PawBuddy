@@ -25,7 +25,7 @@ import EventIcon from "@mui/icons-material/Event";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
-
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import {
   ResponsiveContainer,
   BarChart,
@@ -40,16 +40,12 @@ import {
   Legend,
 } from "recharts";
 
-import {
-  getAdminDashboardStats,
-} from "../../services/dashboardService";
+import { getAdminDashboardStats } from "../../services/dashboardService";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  const user = JSON.parse(
-    localStorage.getItem("user"),
-  );
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,14 +56,12 @@ const AdminDashboard = () => {
       setLoading(true);
       setError("");
 
-      const data =
-        await getAdminDashboardStats();
+      const data = await getAdminDashboardStats();
 
       setStats(data.stats);
     } catch (error) {
       setError(
-        error.response?.data?.message ||
-          "Failed to load dashboard statistics.",
+        error.response?.data?.message || "Failed to load dashboard statistics.",
       );
     } finally {
       setLoading(false);
@@ -138,12 +132,7 @@ const AdminDashboard = () => {
       ]
     : [];
 
-  const applicationColors = [
-    "#F2B84B",
-    "#2F7D6D",
-    "#F28C7A",
-    "#69AFA0",
-  ];
+  const applicationColors = ["#F2B84B", "#2F7D6D", "#F28C7A", "#69AFA0"];
 
   const StatCard = ({
     title,
@@ -277,16 +266,12 @@ const AdminDashboard = () => {
               color: "text.secondary",
             }}
           >
-            Welcome, {user?.name || "Admin"}. Here is an overview of
-            PawBuddy.
+            Welcome, {user?.name || "Admin"}. Here is an overview of PawBuddy.
           </Typography>
         </Box>
 
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 3 }}
-          >
+          <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
@@ -294,11 +279,7 @@ const AdminDashboard = () => {
         {stats && (
           <>
             {/* Main statistics */}
-            <Grid
-              container
-              spacing={2.5}
-              sx={{ mb: 4 }}
-            >
+            <Grid container spacing={2.5} sx={{ mb: 4 }}>
               <Grid
                 size={{
                   xs: 12,
@@ -313,9 +294,7 @@ const AdminDashboard = () => {
                   icon={<PetsIcon />}
                   backgroundColor="#E2F2ED"
                   iconColor="#2F7D6D"
-                  onClick={() =>
-                    navigate("/staff/pets")
-                  }
+                  onClick={() => navigate("/staff/pets")}
                 />
               </Grid>
 
@@ -333,9 +312,7 @@ const AdminDashboard = () => {
                   icon={<HomeWorkIcon />}
                   backgroundColor="#FFF1E6"
                   iconColor="#D97855"
-                  onClick={() =>
-                    navigate("/manage-adoptions")
-                  }
+                  onClick={() => navigate("/manage-adoptions")}
                 />
               </Grid>
 
@@ -348,9 +325,7 @@ const AdminDashboard = () => {
               >
                 <StatCard
                   title="Successful Adoptions"
-                  value={
-                    stats.adoptions.successful
-                  }
+                  value={stats.adoptions.successful}
                   subtitle="All-time completed adoptions"
                   icon={<FavoriteIcon />}
                   backgroundColor="#FDE8E4"
@@ -368,8 +343,7 @@ const AdminDashboard = () => {
                 <StatCard
                   title="Adoption Fees Collected"
                   value={`₹${Number(
-                    stats.payments
-                      .adoptionFeesCollected || 0,
+                    stats.payments.adoptionFeesCollected || 0,
                   ).toLocaleString("en-IN")}`}
                   subtitle={`${stats.payments.successfulPayments} verified payments`}
                   icon={<CurrencyRupeeIcon />}
@@ -380,11 +354,7 @@ const AdminDashboard = () => {
             </Grid>
 
             {/* Charts */}
-            <Grid
-              container
-              spacing={3}
-              sx={{ mb: 4 }}
-            >
+            <Grid container spacing={3} sx={{ mb: 4 }}>
               <Grid
                 size={{
                   xs: 12,
@@ -397,8 +367,7 @@ const AdminDashboard = () => {
                     borderRadius: 3,
                     border: "1px solid",
                     borderColor: "divider",
-                    boxShadow:
-                      "0 4px 18px rgba(0, 0, 0, 0.05)",
+                    boxShadow: "0 4px 18px rgba(0, 0, 0, 0.05)",
                   }}
                 >
                   <CardContent sx={{ p: 3 }}>
@@ -417,8 +386,8 @@ const AdminDashboard = () => {
                       color="text.secondary"
                       sx={{ mb: 3 }}
                     >
-                      Current available and reserved pets compared with
-                      all-time successful adoptions.
+                      Current available and reserved pets compared with all-time
+                      successful adoptions.
                     </Typography>
 
                     <Box
@@ -442,15 +411,9 @@ const AdminDashboard = () => {
                             vertical={false}
                           />
 
-                          <XAxis
-                            dataKey="name"
-                            tickLine={false}
-                          />
+                          <XAxis dataKey="name" tickLine={false} />
 
-                          <YAxis
-                            allowDecimals={false}
-                            tickLine={false}
-                          />
+                          <YAxis allowDecimals={false} tickLine={false} />
 
                           <Tooltip />
 
@@ -463,13 +426,10 @@ const AdminDashboard = () => {
                       </ResponsiveContainer>
                     </Box>
 
-                    <Alert
-                      severity="info"
-                      sx={{ mt: 1 }}
-                    >
-                      Successful Adoptions is an all-time historical
-                      total. It remains unchanged when an adopted pet
-                      is removed from the active pet list.
+                    <Alert severity="info" sx={{ mt: 1 }}>
+                      Successful Adoptions is an all-time historical total. It
+                      remains unchanged when an adopted pet is removed from the
+                      active pet list.
                     </Alert>
                   </CardContent>
                 </Card>
@@ -487,8 +447,7 @@ const AdminDashboard = () => {
                     borderRadius: 3,
                     border: "1px solid",
                     borderColor: "divider",
-                    boxShadow:
-                      "0 4px 18px rgba(0, 0, 0, 0.05)",
+                    boxShadow: "0 4px 18px rgba(0, 0, 0, 0.05)",
                   }}
                 >
                   <CardContent sx={{ p: 3 }}>
@@ -507,8 +466,8 @@ const AdminDashboard = () => {
                       color="text.secondary"
                       sx={{ mb: 2 }}
                     >
-                      Distribution of adoption application records
-                      currently retained in PawBuddy.
+                      Distribution of adoption application records currently
+                      retained in PawBuddy.
                     </Typography>
 
                     <Box
@@ -529,27 +488,21 @@ const AdminDashboard = () => {
                             outerRadius={115}
                             paddingAngle={3}
                           >
-                            {applicationData.map(
-                              (entry, index) => (
-                                <Cell
-                                  key={entry.name}
-                                  fill={
-                                    applicationColors[
-                                      index %
-                                        applicationColors.length
-                                    ]
-                                  }
-                                />
-                              ),
-                            )}
+                            {applicationData.map((entry, index) => (
+                              <Cell
+                                key={entry.name}
+                                fill={
+                                  applicationColors[
+                                    index % applicationColors.length
+                                  ]
+                                }
+                              />
+                            ))}
                           </Pie>
 
                           <Tooltip />
 
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                          />
+                          <Legend verticalAlign="bottom" height={36} />
                         </PieChart>
                       </ResponsiveContainer>
                     </Box>
@@ -569,11 +522,7 @@ const AdminDashboard = () => {
               Operations
             </Typography>
 
-            <Grid
-              container
-              spacing={2.5}
-              sx={{ mb: 5 }}
-            >
+            <Grid container spacing={2.5} sx={{ mb: 5 }}>
               <Grid
                 size={{
                   xs: 12,
@@ -588,9 +537,7 @@ const AdminDashboard = () => {
                   icon={<PeopleIcon />}
                   backgroundColor="#E2F2ED"
                   iconColor="#2F7D6D"
-                  onClick={() =>
-                    navigate("/admin/users")
-                  }
+                  onClick={() => navigate("/admin/users")}
                 />
               </Grid>
 
@@ -608,9 +555,7 @@ const AdminDashboard = () => {
                   icon={<BadgeIcon />}
                   backgroundColor="#EDF3F8"
                   iconColor="#42647A"
-                  onClick={() =>
-                    navigate("/admin/users")
-                  }
+                  onClick={() => navigate("/admin/users")}
                 />
               </Grid>
 
@@ -623,16 +568,12 @@ const AdminDashboard = () => {
               >
                 <StatCard
                   title="Pending Applications"
-                  value={
-                    stats.applications.pending
-                  }
+                  value={stats.applications.pending}
                   subtitle="Waiting for review"
                   icon={<AssignmentIcon />}
                   backgroundColor="#FFF1E6"
                   iconColor="#D97855"
-                  onClick={() =>
-                    navigate("/manage-adoptions")
-                  }
+                  onClick={() => navigate("/manage-adoptions")}
                 />
               </Grid>
 
@@ -645,18 +586,12 @@ const AdminDashboard = () => {
               >
                 <StatCard
                   title="Upcoming Appointments"
-                  value={
-                    stats.appointments.upcoming
-                  }
+                  value={stats.appointments.upcoming}
                   subtitle="Scheduled visits"
                   icon={<EventIcon />}
                   backgroundColor="#FDE8E4"
                   iconColor="#F28C7A"
-                  onClick={() =>
-                    navigate(
-                      "/manage-appointments",
-                    )
-                  }
+                  onClick={() => navigate("/manage-appointments")}
                 />
               </Grid>
             </Grid>
@@ -676,10 +611,7 @@ const AdminDashboard = () => {
             Management
           </Typography>
 
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
+          <Typography variant="body2" color="text.secondary">
             Access PawBuddy administration tools.
           </Typography>
         </Box>
@@ -693,12 +625,7 @@ const AdminDashboard = () => {
               md: 4,
             }}
           >
-            <Card
-              onClick={() =>
-                navigate("/admin/users")
-              }
-              sx={actionCardStyle}
-            >
+            <Card onClick={() => navigate("/admin/users")} sx={actionCardStyle}>
               <CardContent sx={{ p: 3 }}>
                 <Avatar
                   sx={{
@@ -721,10 +648,7 @@ const AdminDashboard = () => {
                   User Management
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
+                <Typography variant="body2" color="text.secondary">
                   View users and activate or deactivate accounts.
                 </Typography>
               </CardContent>
@@ -739,11 +663,7 @@ const AdminDashboard = () => {
             }}
           >
             <Card
-              onClick={() =>
-                navigate(
-                  "/admin/create-staff",
-                )
-              }
+              onClick={() => navigate("/admin/create-staff")}
               sx={actionCardStyle}
             >
               <CardContent sx={{ p: 3 }}>
@@ -768,10 +688,7 @@ const AdminDashboard = () => {
                   Create Staff
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
+                <Typography variant="body2" color="text.secondary">
                   Create new shelter staff accounts.
                 </Typography>
               </CardContent>
@@ -785,12 +702,7 @@ const AdminDashboard = () => {
               md: 4,
             }}
           >
-            <Card
-              onClick={() =>
-                navigate("/staff/pets")
-              }
-              sx={actionCardStyle}
-            >
+            <Card onClick={() => navigate("/staff/pets")} sx={actionCardStyle}>
               <CardContent sx={{ p: 3 }}>
                 <Avatar
                   sx={{
@@ -813,12 +725,8 @@ const AdminDashboard = () => {
                   Manage Pets
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Add, update, view and remove pets available for
-                  adoption.
+                <Typography variant="body2" color="text.secondary">
+                  Add, update, view and remove pets available for adoption.
                 </Typography>
               </CardContent>
             </Card>
@@ -832,11 +740,7 @@ const AdminDashboard = () => {
             }}
           >
             <Card
-              onClick={() =>
-                navigate(
-                  "/manage-adoptions",
-                )
-              }
+              onClick={() => navigate("/manage-adoptions")}
               sx={actionCardStyle}
             >
               <CardContent sx={{ p: 3 }}>
@@ -861,12 +765,8 @@ const AdminDashboard = () => {
                   Adoption Applications
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Review and manage adoption requests submitted by
-                  adopters.
+                <Typography variant="body2" color="text.secondary">
+                  Review and manage adoption requests submitted by adopters.
                 </Typography>
               </CardContent>
             </Card>
@@ -880,11 +780,7 @@ const AdminDashboard = () => {
             }}
           >
             <Card
-              onClick={() =>
-                navigate(
-                  "/manage-appointments",
-                )
-              }
+              onClick={() => navigate("/manage-appointments")}
               sx={actionCardStyle}
             >
               <CardContent sx={{ p: 3 }}>
@@ -909,12 +805,49 @@ const AdminDashboard = () => {
                   Manage Appointments
                 </Typography>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
+                <Typography variant="body2" color="text.secondary">
                   Review, approve and complete adoption and site visit
                   appointments.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6,
+              md: 4,
+            }}
+          >
+            <Card
+              onClick={() => navigate("/admin/complaints")}
+              sx={actionCardStyle}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Avatar
+                  sx={{
+                    mb: 2,
+                    bgcolor: "#FDE8E4",
+                    color: "#F28C7A",
+                  }}
+                >
+                  <ReportProblemIcon />
+                </Avatar>
+
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "secondary.main",
+                    fontWeight: 700,
+                    mb: 1,
+                  }}
+                >
+                  Manage Complaints
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  Review adopter complaints, provide responses and resolve
+                  reported issues.
                 </Typography>
               </CardContent>
             </Card>
