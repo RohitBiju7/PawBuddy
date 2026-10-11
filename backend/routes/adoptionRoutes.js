@@ -4,13 +4,19 @@ const {
   applyForAdoption,
   getMyApplications,
   getAllApplications,
+  updateStaffNotes,
   updateApplicationStatus,
   completeAdoption,
   cancelApplication,
 } = require("../controllers/adoptionController");
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+const {
+  protect,
+} = require("../middleware/authMiddleware");
+
+const {
+  authorizeRoles,
+} = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
@@ -33,6 +39,13 @@ router.get(
   protect,
   authorizeRoles("admin", "staff"),
   getAllApplications,
+);
+
+router.patch(
+  "/:id/notes",
+  protect,
+  authorizeRoles("admin", "staff"),
+  updateStaffNotes,
 );
 
 router.patch(

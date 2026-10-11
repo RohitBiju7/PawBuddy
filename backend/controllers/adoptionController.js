@@ -147,6 +147,7 @@ const getMyApplications = async (req, res) => {
 const getAllApplications = async (req, res) => {
   try {
     const applications = await Adoption.find()
+      .select("+staffNotes")
       .populate("pet")
       .populate(
         "adopter",
@@ -165,25 +166,42 @@ const getAllApplications = async (req, res) => {
   }
 };
 
-const updateApplicationStatus = async (
-  req,
-  res,
-) => {
+const updateStaffNotes = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { staffNotes } = req.body;
 
-    if (
-      !["approved", "rejected"].includes(status)
-    ) {
+    if (staffNotes === undefined) {
       return res.status(400).json({
-        message:
-          "Status must be approved or rejected",
+        message: "Staff notes are required",
       });
     }
 
-    const adoption = await Adoption.findById(
-      req.params.id,
-    );
+    if (
+      typeof staffNotes !== "string"
+    ) {
+      return res.status(400).json({
+        message:
+          "Staff notes must be text",
+      });
+    }
+
+    if (staffNotes.length > 1000) {
+      return res.status(400).json({
+        message:
+          "Staff notes cannot exceed 1000 characters",
+      });
+    }
+
+    const adoption =
+      await Adoption.findById(
+        req.params.id,
+      )
+        .select("+staffNotes")
+        .populate("pet")
+        .populate(
+          "adopter",
+          "name email phone",
+        );
 
     if (!adoption) {
       return res.status(404).json({
@@ -192,7 +210,59 @@ const updateApplicationStatus = async (
       });
     }
 
-    if (adoption.status !== "pending") {
+    adoption.staffNotes =
+      staffNotes.trim();
+
+    await adoption.save();
+
+    res.status(200).json({
+      message:
+        "Staff notes updated successfully",
+      adoption,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+const updateApplicationStatus = async (
+  req,
+  res,
+) => {
+  try {
+    const { status } = req.body;
+
+    if (
+      ![
+        "approved",
+        "rejected",
+      ].includes(status)
+    ) {
+      return res.status(400).json({
+        message:
+          "Status must be approved or rejected",
+      });
+    }
+
+    const adoption =
+      await Adoption.findById(
+        req.params.id,
+      );
+
+    if (!adoption) {
+      return res.status(404).json({
+        message:
+          "Adoption application not found",
+      });
+    }
+
+    if (
+      adoption.status !==
+      "pending"
+    ) {
       return res.status(400).json({
         message:
           "Only pending adoption applications can be updated",
@@ -219,15 +289,19 @@ const updateApplicationStatus = async (
         "name email",
       );
 
-      adoption.status = "rejected";
+      adoption.status =
+        "rejected";
 
       await adoption.save();
 
       const emailSent =
-        await sendAdoptionRejectionEmail({
-          adopter: adoption.adopter,
-          petName: pet.name,
-        });
+        await sendAdoptionRejectionEmail(
+          {
+            adopter:
+              adoption.adopter,
+            petName: pet.name,
+          },
+        );
 
       return res.status(200).json({
         message:
@@ -251,7 +325,9 @@ const updateApplicationStatus = async (
       });
     }
 
-    if (pet.status !== "available") {
+    if (
+      pet.status !== "available"
+    ) {
       return res.status(400).json({
         message:
           "This pet is no longer available, so this application cannot be approved",
@@ -267,7 +343,9 @@ const updateApplicationStatus = async (
         },
       });
 
-    if (existingApprovedApplication) {
+    if (
+      existingApprovedApplication
+    ) {
       return res.status(400).json({
         message:
           "This pet already has an approved adoption application",
@@ -291,7 +369,8 @@ const updateApplicationStatus = async (
       );
 
     // Approve selected application.
-    adoption.status = "approved";
+    adoption.status =
+      "approved";
 
     await adoption.save();
 
@@ -322,13 +401,17 @@ const updateApplicationStatus = async (
     */
     let rejectionEmailsSent = 0;
 
-    for (const rejectedApplication of applicationsToReject) {
+    for (
+      const rejectedApplication of applicationsToReject
+    ) {
       const sent =
-        await sendAdoptionRejectionEmail({
-          adopter:
-            rejectedApplication.adopter,
-          petName: pet.name,
-        });
+        await sendAdoptionRejectionEmail(
+          {
+            adopter:
+              rejectedApplication.adopter,
+            petName: pet.name,
+          },
+        );
 
       if (sent) {
         rejectionEmailsSent += 1;
@@ -346,9 +429,12 @@ const updateApplicationStatus = async (
     let emailSent = false;
 
     try {
-      if (adoption.adopter?.email) {
+      if (
+        adoption.adopter?.email
+      ) {
         await sendEmail({
-          to: adoption.adopter.email,
+          to:
+            adoption.adopter.email,
 
           subject: `Your adoption application for ${pet.name} has been approved!`,
 
@@ -449,7 +535,10 @@ const completeAdoption = async (
       });
     }
 
-    if (adoption.status !== "approved") {
+    if (
+      adoption.status !==
+      "approved"
+    ) {
       return res.status(400).json({
         message:
           "Only an approved adoption application can be marked as completed",
@@ -467,7 +556,9 @@ const completeAdoption = async (
       });
     }
 
-    if (pet.status !== "pending") {
+    if (
+      pet.status !== "pending"
+    ) {
       return res.status(400).json({
         message:
           "This pet is not currently reserved for an approved adoption",
@@ -486,14 +577,20 @@ const completeAdoption = async (
       → a verified Payment document with status "paid"
         must exist before the adoption can be completed.
     */
-    if (pet.adoptionFee > 0) {
-      const payment = await Payment.findOne({
-        adoption: adoption._id,
-        adopter: adoption.adopter,
-        pet: pet._id,
-        paymentType: "adoption_fee",
-        status: "paid",
-      });
+    if (
+      pet.adoptionFee > 0
+    ) {
+      const payment =
+        await Payment.findOne({
+          adoption:
+            adoption._id,
+          adopter:
+            adoption.adopter,
+          pet: pet._id,
+          paymentType:
+            "adoption_fee",
+          status: "paid",
+        });
 
       if (!payment) {
         return res.status(400).json({
@@ -503,7 +600,8 @@ const completeAdoption = async (
       }
     }
 
-    adoption.status = "completed";
+    adoption.status =
+      "completed";
 
     await adoption.save();
 
@@ -552,7 +650,10 @@ const cancelApplication = async (
       });
     }
 
-    if (adoption.status !== "pending") {
+    if (
+      adoption.status !==
+      "pending"
+    ) {
       return res.status(400).json({
         message:
           "Only pending applications can be cancelled",
@@ -577,6 +678,7 @@ module.exports = {
   applyForAdoption,
   getMyApplications,
   getAllApplications,
+  updateStaffNotes,
   updateApplicationStatus,
   completeAdoption,
   cancelApplication,

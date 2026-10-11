@@ -20,9 +20,22 @@ const adoptionSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
+    staffNotes: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+      default: "",
+      select: false,
+    },
+
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "completed"],
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "completed",
+      ],
       default: "pending",
     },
   },
@@ -31,4 +44,7 @@ const adoptionSchema = new mongoose.Schema(
   },
 );
 
-module.exports = mongoose.model("Adoption", adoptionSchema);
+module.exports = mongoose.model(
+  "Adoption",
+  adoptionSchema,
+);

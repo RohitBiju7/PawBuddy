@@ -10,18 +10,39 @@ export const applyForAdoption = async (applicationData) => {
 };
 
 export const getMyApplications = async () => {
-  const response = await axiosInstance.get("/adoptions/my");
+  const response = await axiosInstance.get(
+    "/adoptions/my",
+  );
 
   return response.data;
 };
 
 export const getAllApplications = async () => {
-  const response = await axiosInstance.get("/adoptions");
+  const response = await axiosInstance.get(
+    "/adoptions",
+  );
 
   return response.data;
 };
 
-export const updateApplicationStatus = async (id, status) => {
+export const updateStaffNotes = async (
+  id,
+  staffNotes,
+) => {
+  const response = await axiosInstance.patch(
+    `/adoptions/${id}/notes`,
+    {
+      staffNotes,
+    },
+  );
+
+  return response.data;
+};
+
+export const updateApplicationStatus = async (
+  id,
+  status,
+) => {
   const response = await axiosInstance.patch(
     `/adoptions/${id}/status`,
     {

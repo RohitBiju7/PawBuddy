@@ -13,40 +13,47 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  TextField,
 } from "@mui/material";
 
 import {
   getAllApplications,
   updateApplicationStatus,
   completeAdoption,
+  updateStaffNotes,
 } from "../../services/adoptionService";
 
-import {
-  getAdoptionPaymentStatusForStaff,
-} from "../../services/paymentService";
+import { getAdoptionPaymentStatusForStaff } from "../../services/paymentService";
 
 const ManageAdoptions = () => {
   const [applications, setApplications] = useState([]);
+
   const [paymentStatuses, setPaymentStatuses] = useState({});
+
+  const [staffNotes, setStaffNotes] = useState({});
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
+
   const [success, setSuccess] = useState("");
+
   const [updatingId, setUpdatingId] = useState(null);
+
+  const [savingNotesId, setSavingNotesId] = useState(null);
+
+  const [editingNotesId, setEditingNotesId] = useState(null);
 
   const fetchPaymentStatus = async (applicationId) => {
     try {
-      const data =
-        await getAdoptionPaymentStatusForStaff(applicationId);
+      const data = await getAdoptionPaymentStatusForStaff(applicationId);
 
       setPaymentStatuses((current) => ({
         ...current,
         [applicationId]: data,
       }));
     } catch (error) {
-      console.error(
-        "Failed to load adoption payment status:",
-        error,
-      );
+      console.error("Failed to load adoption payment status:", error);
     }
   };
 
@@ -57,27 +64,30 @@ const ManageAdoptions = () => {
 
       const data = await getAllApplications();
 
-      const applicationList =
-        data.applications || [];
+      const applicationList = data.applications || [];
 
       setApplications(applicationList);
+
+      const initialNotes = {};
+
+      applicationList.forEach((application) => {
+        initialNotes[application._id] = application.staffNotes || "";
+      });
+
+      setStaffNotes(initialNotes);
 
       /*
         Payment status matters for approved/completed adoptions.
       */
-      const paymentRelevantApplications =
-        applicationList.filter(
-          (application) =>
-            application.pet &&
-            ["approved", "completed"].includes(
-              application.status,
-            ),
-        );
+      const paymentRelevantApplications = applicationList.filter(
+        (application) =>
+          application.pet &&
+          ["approved", "completed"].includes(application.status),
+      );
 
       await Promise.all(
-        paymentRelevantApplications.map(
-          (application) =>
-            fetchPaymentStatus(application._id),
+        paymentRelevantApplications.map((application) =>
+          fetchPaymentStatus(application._id),
         ),
       );
     } catch (error) {
@@ -119,20 +129,58 @@ const ManageAdoptions = () => {
       return "Unavailable";
     }
 
-    return (
-      status.charAt(0).toUpperCase() +
-      status.slice(1)
-    );
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  const handleStatusUpdate = async (
-    applicationId,
-    status,
-  ) => {
-    const action =
-      status === "approved"
-        ? "approve"
-        : "reject";
+  const handleNotesChange = (applicationId, value) => {
+    setStaffNotes((current) => ({
+      ...current,
+      [applicationId]: value,
+    }));
+  };
+
+  const handleSaveNotes = async (applicationId) => {
+    if (editingNotesId !== applicationId) {
+      setEditingNotesId(applicationId);
+      return;
+    }
+
+    try {
+      setSavingNotesId(applicationId);
+
+      setError("");
+      setSuccess("");
+
+      const data = await updateStaffNotes(
+        applicationId,
+        staffNotes[applicationId] || "",
+      );
+
+      setApplications((currentApplications) =>
+        currentApplications.map((application) =>
+          application._id === applicationId
+            ? {
+                ...application,
+                staffNotes: data.adoption?.staffNotes || "",
+              }
+            : application,
+        ),
+      );
+
+      setEditingNotesId(null);
+
+      setSuccess(data.message || "Staff notes updated successfully.");
+    } catch (error) {
+      setError(
+        error.response?.data?.message || "Failed to update staff notes.",
+      );
+    } finally {
+      setSavingNotesId(null);
+    }
+  };
+
+  const handleStatusUpdate = async (applicationId, status) => {
+    const action = status === "approved" ? "approve" : "reject";
 
     const confirmed = window.confirm(
       `Are you sure you want to ${action} this adoption application?`,
@@ -144,14 +192,11 @@ const ManageAdoptions = () => {
 
     try {
       setUpdatingId(applicationId);
+
       setError("");
       setSuccess("");
 
-      const data =
-        await updateApplicationStatus(
-          applicationId,
-          status,
-        );
+      const data = await updateApplicationStatus(applicationId, status);
 
       /*
         Refetch because approving one application
@@ -160,8 +205,7 @@ const ManageAdoptions = () => {
       await fetchApplications();
 
       setSuccess(
-        data.message ||
-          `Adoption application ${status} successfully.`,
+        data.message || `Adoption application ${status} successfully.`,
       );
     } catch (error) {
       setError(
@@ -173,10 +217,7 @@ const ManageAdoptions = () => {
     }
   };
 
-  const handleCompleteAdoption = async (
-    applicationId,
-    petName,
-  ) => {
+  const handleCompleteAdoption = async (applicationId, petName) => {
     const confirmed = window.confirm(
       `Has ${petName} been adopted by the approved adopter in person?`,
     );
@@ -187,23 +228,18 @@ const ManageAdoptions = () => {
 
     try {
       setUpdatingId(applicationId);
+
       setError("");
       setSuccess("");
 
-      const data = await completeAdoption(
-        applicationId,
-      );
+      const data = await completeAdoption(applicationId);
 
       await fetchApplications();
 
-      setSuccess(
-        data.message ||
-          "Adoption completed successfully.",
-      );
+      setSuccess(data.message || "Adoption completed successfully.");
     } catch (error) {
       setError(
-        error.response?.data?.message ||
-          "Failed to complete the adoption.",
+        error.response?.data?.message || "Failed to complete the adoption.",
       );
     } finally {
       setUpdatingId(null);
@@ -235,8 +271,7 @@ const ManageAdoptions = () => {
           </Typography>
 
           <Typography color="text.secondary">
-            Review and manage adoption applications submitted by
-            adopters.
+            Review and manage adoption applications submitted by adopters.
           </Typography>
         </Box>
 
@@ -266,18 +301,14 @@ const ManageAdoptions = () => {
           <Grid container spacing={3}>
             {applications.map((application) => {
               const pet = application.pet;
+
               const adopter = application.adopter;
 
-              const paymentStatus =
-                paymentStatuses[
-                  application._id
-                ];
+              const paymentStatus = paymentStatuses[application._id];
 
-              const paymentRequired =
-                pet?.adoptionFee > 0;
+              const paymentRequired = pet?.adoptionFee > 0;
 
-              const isPaid =
-                paymentStatus?.paid === true;
+              const isPaid = paymentStatus?.paid === true;
 
               const paymentStillLoading =
                 application.status === "approved" &&
@@ -334,7 +365,9 @@ const ManageAdoptions = () => {
                         justifyContent="space-between"
                         alignItems="flex-start"
                         spacing={2}
-                        sx={{ mb: 2 }}
+                        sx={{
+                          mb: 2,
+                        }}
                       >
                         <Typography
                           variant="h6"
@@ -343,68 +376,37 @@ const ManageAdoptions = () => {
                             color: "primary.main",
                           }}
                         >
-                          {pet?.name ||
-                            "Pet unavailable"}
+                          {pet?.name || "Pet unavailable"}
                         </Typography>
 
                         <Chip
                           label={application.status}
-                          color={getApplicationStatusColor(
-                            application.status,
-                          )}
+                          color={getApplicationStatusColor(application.status)}
                           size="small"
                           sx={{
-                            textTransform:
-                              "capitalize",
+                            textTransform: "capitalize",
                             fontWeight: 600,
                           }}
                         />
                       </Stack>
 
                       {pet && (
-                        <Stack
-                          spacing={0.8}
-                          sx={{ mb: 2 }}
-                        >
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            <strong>
-                              Breed:
-                            </strong>{" "}
-                            {pet.breed}
+                        <Stack spacing={0.8} sx={{ mb: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Breed:</strong> {pet.breed}
                           </Typography>
 
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            <strong>
-                              Species:
-                            </strong>{" "}
-                            {pet.species}
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Species:</strong> {pet.species}
                           </Typography>
 
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            <strong>
-                              Pet Status:
-                            </strong>{" "}
-                            {getPetStatusLabel(
-                              pet.status,
-                            )}
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Pet Status:</strong>{" "}
+                            {getPetStatusLabel(pet.status)}
                           </Typography>
 
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            <strong>
-                              Adoption Fee:
-                            </strong>{" "}
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Adoption Fee:</strong>{" "}
                             {pet.adoptionFee === 0
                               ? "Free"
                               : `₹${pet.adoptionFee}`}
@@ -425,9 +427,7 @@ const ManageAdoptions = () => {
                                 variant="body2"
                                 color="text.secondary"
                               >
-                                <strong>
-                                  Payment:
-                                </strong>
+                                <strong>Payment:</strong>
                               </Typography>
 
                               {!paymentRequired ? (
@@ -439,8 +439,7 @@ const ManageAdoptions = () => {
                                     fontWeight: 600,
                                   }}
                                 />
-                              ) : paymentStatus ===
-                                undefined ? (
+                              ) : paymentStatus === undefined ? (
                                 <Chip
                                   label="Checking..."
                                   size="small"
@@ -473,12 +472,8 @@ const ManageAdoptions = () => {
                       )}
 
                       {!pet && (
-                        <Alert
-                          severity="warning"
-                          sx={{ mb: 2 }}
-                        >
-                          The pet linked to this
-                          application no longer exists.
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                          The pet linked to this application no longer exists.
                         </Alert>
                       )}
 
@@ -495,31 +490,19 @@ const ManageAdoptions = () => {
                       </Typography>
 
                       <Stack spacing={0.8}>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
+                        <Typography variant="body2" color="text.secondary">
                           <strong>Name:</strong>{" "}
-                          {adopter?.name ||
-                            "Unavailable"}
+                          {adopter?.name || "Unavailable"}
                         </Typography>
 
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
+                        <Typography variant="body2" color="text.secondary">
                           <strong>Email:</strong>{" "}
-                          {adopter?.email ||
-                            "Unavailable"}
+                          {adopter?.email || "Unavailable"}
                         </Typography>
 
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
+                        <Typography variant="body2" color="text.secondary">
                           <strong>Phone:</strong>{" "}
-                          {adopter?.phone ||
-                            "Unavailable"}
+                          {adopter?.phone || "Unavailable"}
                         </Typography>
                       </Stack>
 
@@ -528,8 +511,7 @@ const ManageAdoptions = () => {
                           sx={{
                             mt: 2,
                             p: 2,
-                            backgroundColor:
-                              "#F7FAF9",
+                            backgroundColor: "#F7FAF9",
                             borderRadius: 2,
                           }}
                         >
@@ -555,179 +537,244 @@ const ManageAdoptions = () => {
                         </Box>
                       )}
 
-                      {application.status ===
-                        "pending" &&
-                        pet && (
-                          <Stack
-                            direction={{
-                              xs: "column",
-                              sm: "row",
-                            }}
-                            spacing={1.5}
+                      <Divider sx={{ my: 3 }} />
+
+                      <Box
+                        sx={{
+                          p: 2.5,
+                          backgroundColor: "#EAF4F1",
+                          borderRadius: 2.5,
+                          border: "1px solid",
+                          borderColor: "#A8D5C5",
+                        }}
+                      >
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          spacing={2}
+                          sx={{ mb: 1.5 }}
+                        >
+                          <Typography
+                            variant="subtitle1"
                             sx={{
-                              mt: 3,
+                              fontWeight: 700,
+                              color: "primary.main",
                             }}
                           >
-                            <Button
-                              variant="contained"
-                              color="success"
-                              fullWidth
-                              disabled={
-                                updatingId ===
-                                application._id
-                              }
-                              onClick={() =>
-                                handleStatusUpdate(
-                                  application._id,
-                                  "approved",
-                                )
-                              }
-                              sx={{
-                                textTransform:
-                                  "none",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {updatingId ===
-                              application._id
-                                ? "Updating..."
-                                : "Approve"}
-                            </Button>
+                            Staff Notes
+                          </Typography>
 
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              fullWidth
-                              disabled={
-                                updatingId ===
-                                application._id
-                              }
-                              onClick={() =>
-                                handleStatusUpdate(
-                                  application._id,
-                                  "rejected",
-                                )
-                              }
-                              sx={{
-                                textTransform:
-                                  "none",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {updatingId ===
-                              application._id
-                                ? "Updating..."
-                                : "Reject"}
-                            </Button>
-                          </Stack>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            disabled={savingNotesId === application._id}
+                            onClick={() => handleSaveNotes(application._id)}
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {savingNotesId === application._id
+                              ? "Saving..."
+                              : editingNotesId === application._id
+                                ? "Save Notes"
+                                : "Edit Notes"}
+                          </Button>
+                        </Stack>
+
+                        {editingNotesId === application._id ? (
+                          <TextField
+                            value={staffNotes[application._id] || ""}
+                            onChange={(event) =>
+                              handleNotesChange(
+                                application._id,
+                                event.target.value,
+                              )
+                            }
+                            multiline
+                            minRows={3}
+                            fullWidth
+                            autoFocus
+                            placeholder="Add internal notes about this application..."
+                            inputProps={{
+                              maxLength: 1000,
+                            }}
+                            helperText={`${
+                              staffNotes[application._id]?.length || 0
+                            }/1000`}
+                            sx={{
+                              backgroundColor: "white",
+                              borderRadius: 2,
+                            }}
+                          />
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              lineHeight: 1.7,
+                              whiteSpace: "pre-wrap",
+                              color: staffNotes[application._id]
+                                ? "text.primary"
+                                : "text.secondary",
+                              fontStyle: staffNotes[application._id]
+                                ? "normal"
+                                : "italic",
+                            }}
+                          >
+                            {staffNotes[application._id] ||
+                              "No staff notes added yet."}
+                          </Typography>
                         )}
+                      </Box>
 
-                      {application.status ===
-                        "approved" &&
-                        pet && (
-                          <Box sx={{ mt: 3 }}>
+                      {application.status === "pending" && pet && (
+                        <Stack
+                          direction={{
+                            xs: "column",
+                            sm: "row",
+                          }}
+                          spacing={1.5}
+                          sx={{
+                            mt: 3,
+                          }}
+                        >
+                          <Button
+                            variant="contained"
+                            color="success"
+                            fullWidth
+                            disabled={updatingId === application._id}
+                            onClick={() =>
+                              handleStatusUpdate(application._id, "approved")
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {updatingId === application._id
+                              ? "Updating..."
+                              : "Approve"}
+                          </Button>
+
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            fullWidth
+                            disabled={updatingId === application._id}
+                            onClick={() =>
+                              handleStatusUpdate(application._id, "rejected")
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {updatingId === application._id
+                              ? "Updating..."
+                              : "Reject"}
+                          </Button>
+                        </Stack>
+                      )}
+
+                      {application.status === "approved" && pet && (
+                        <Box
+                          sx={{
+                            mt: 3,
+                          }}
+                        >
+                          <Alert
+                            severity="success"
+                            sx={{
+                              mb: 2,
+                            }}
+                          >
+                            This application has been approved. The pet is
+                            currently reserved for this adopter.
+                          </Alert>
+
+                          {paymentRequired && !isPaid && (
+                            <Alert
+                              severity="warning"
+                              sx={{
+                                mb: 2,
+                              }}
+                            >
+                              The adoption fee must be paid before this adoption
+                              can be marked as completed.
+                            </Alert>
+                          )}
+
+                          {!paymentRequired && (
+                            <Alert
+                              severity="info"
+                              sx={{
+                                mb: 2,
+                              }}
+                            >
+                              This pet has no adoption fee. Payment is not
+                              required.
+                            </Alert>
+                          )}
+
+                          {paymentRequired && isPaid && (
                             <Alert
                               severity="success"
-                              sx={{ mb: 2 }}
-                            >
-                              This application has
-                              been approved. The pet
-                              is currently reserved
-                              for this adopter.
-                            </Alert>
-
-                            {paymentRequired &&
-                              !isPaid && (
-                                <Alert
-                                  severity="warning"
-                                  sx={{ mb: 2 }}
-                                >
-                                  The adoption fee
-                                  must be paid before
-                                  this adoption can be
-                                  marked as completed.
-                                </Alert>
-                              )}
-
-                            {!paymentRequired && (
-                              <Alert
-                                severity="info"
-                                sx={{ mb: 2 }}
-                              >
-                                This pet has no
-                                adoption fee. Payment
-                                is not required.
-                              </Alert>
-                            )}
-
-                            {paymentRequired &&
-                              isPaid && (
-                                <Alert
-                                  severity="success"
-                                  sx={{ mb: 2 }}
-                                >
-                                  Adoption fee has
-                                  been paid.
-                                </Alert>
-                              )}
-
-                            <Button
-                              variant="contained"
-                              fullWidth
-                              disabled={
-                                updatingId ===
-                                  application._id ||
-                                paymentStillLoading ||
-                                (paymentRequired &&
-                                  !isPaid)
-                              }
-                              onClick={() =>
-                                handleCompleteAdoption(
-                                  application._id,
-                                  pet.name,
-                                )
-                              }
                               sx={{
-                                textTransform:
-                                  "none",
-                                fontWeight: 700,
+                                mb: 2,
                               }}
                             >
-                              {updatingId ===
-                              application._id
-                                ? "Updating..."
-                                : paymentStillLoading
-                                  ? "Checking Payment..."
-                                  : "Mark as Adopted"}
-                            </Button>
-                          </Box>
-                        )}
+                              Adoption fee has been paid.
+                            </Alert>
+                          )}
 
-                      {application.status ===
-                        "rejected" && (
-                          <Alert
-                            severity="error"
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            disabled={
+                              updatingId === application._id ||
+                              paymentStillLoading ||
+                              (paymentRequired && !isPaid)
+                            }
+                            onClick={() =>
+                              handleCompleteAdoption(application._id, pet.name)
+                            }
                             sx={{
-                              mt: 3,
+                              textTransform: "none",
+                              fontWeight: 700,
                             }}
                           >
-                            This application has been
-                            rejected.
-                          </Alert>
-                        )}
+                            {updatingId === application._id
+                              ? "Updating..."
+                              : paymentStillLoading
+                                ? "Checking Payment..."
+                                : "Mark as Adopted"}
+                          </Button>
+                        </Box>
+                      )}
 
-                      {application.status ===
-                        "completed" && (
-                          <Alert
-                            severity="info"
-                            sx={{
-                              mt: 3,
-                            }}
-                          >
-                            This adoption has been
-                            completed.
-                          </Alert>
-                        )}
+                      {application.status === "rejected" && (
+                        <Alert
+                          severity="error"
+                          sx={{
+                            mt: 3,
+                          }}
+                        >
+                          This application has been rejected.
+                        </Alert>
+                      )}
+
+                      {application.status === "completed" && (
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mt: 3,
+                          }}
+                        >
+                          This adoption has been completed.
+                        </Alert>
+                      )}
                     </CardContent>
                   </Card>
                 </Grid>
@@ -745,19 +792,13 @@ const ManageAdoptions = () => {
                   <Typography
                     variant="h6"
                     color="text.secondary"
-                    sx={{
-                      mb: 1,
-                    }}
+                    sx={{ mb: 1 }}
                   >
                     No adoption applications
                   </Typography>
 
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                  >
-                    New adoption applications will
-                    appear here.
+                  <Typography variant="body2" color="text.secondary">
+                    New adoption applications will appear here.
                   </Typography>
                 </Box>
               </Grid>
