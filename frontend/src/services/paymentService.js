@@ -41,3 +41,41 @@ export const getAdoptionPaymentStatusForStaff = async (
 
   return response.data;
 };
+
+export const createDonationOrder = async (amount) => {
+  const response = await axiosInstance.post(
+    "/payments/donation/create-order",
+    {
+      amount,
+    },
+  );
+
+  return response.data;
+};
+
+export const verifyDonationPayment = async (
+  paymentData,
+) => {
+  const response = await axiosInstance.post(
+    "/payments/donation/verify",
+    paymentData,
+  );
+
+  return response.data;
+};
+
+export const getMyDonations = async () => {
+  const response = await axiosInstance.get(
+    "/payments/donation/my",
+  );
+
+  return response.data;
+};
+
+export const getAllDonations = async () => {
+  const response = await axiosInstance.get(
+    "/payments/donation",
+  );
+
+  return response.data;
+};

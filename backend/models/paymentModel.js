@@ -5,13 +5,13 @@ const paymentSchema = new mongoose.Schema(
     adoption: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Adoption",
-      required: true,
+      default: null,
     },
 
     pet: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Pet",
-      required: true,
+      default: null,
     },
 
     adopter: {
@@ -23,7 +23,7 @@ const paymentSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: true,
-      min: 0,
+      min: 1,
     },
 
     currency: {
@@ -33,8 +33,11 @@ const paymentSchema = new mongoose.Schema(
 
     paymentType: {
       type: String,
-      enum: ["adoption_fee"],
-      default: "adoption_fee",
+      enum: [
+        "adoption_fee",
+        "donation",
+      ],
+      required: true,
     },
 
     razorpayOrderId: {
@@ -54,7 +57,11 @@ const paymentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["created", "paid", "failed"],
+      enum: [
+        "created",
+        "paid",
+        "failed",
+      ],
       default: "created",
     },
 

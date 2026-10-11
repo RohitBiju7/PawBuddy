@@ -5,10 +5,19 @@ const {
   verifyAdoptionFeePayment,
   getAdoptionPaymentStatus,
   getAdoptionPaymentStatusForStaff,
+  createDonationOrder,
+  verifyDonationPayment,
+  getMyDonations,
+  getAllDonations,
 } = require("../controllers/paymentController");
 
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
+const {
+  protect,
+} = require("../middleware/authMiddleware");
+
+const {
+  authorizeRoles,
+} = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
@@ -20,7 +29,7 @@ router.post(
   createAdoptionFeeOrder,
 );
 
-// Verify Razorpay payment after checkout
+// Verify Razorpay adoption fee payment
 router.post(
   "/adoption/verify",
   protect,
@@ -42,6 +51,42 @@ router.get(
   protect,
   authorizeRoles("adopter"),
   getAdoptionPaymentStatus,
+);
+
+/*
+  DONATIONS
+*/
+
+// Create Razorpay donation order
+router.post(
+  "/donation/create-order",
+  protect,
+  authorizeRoles("adopter"),
+  createDonationOrder,
+);
+
+// Verify donation payment
+router.post(
+  "/donation/verify",
+  protect,
+  authorizeRoles("adopter"),
+  verifyDonationPayment,
+);
+
+// Adopter views own successful donations
+router.get(
+  "/donation/my",
+  protect,
+  authorizeRoles("adopter"),
+  getMyDonations,
+);
+
+// Admin views all successful donations
+router.get(
+  "/donation",
+  protect,
+  authorizeRoles("admin"),
+  getAllDonations,
 );
 
 module.exports = router;

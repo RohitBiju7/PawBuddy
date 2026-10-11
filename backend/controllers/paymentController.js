@@ -69,6 +69,7 @@ const createAdoptionFeeOrder = async (req, res) => {
     // Prevent paying twice
     const existingPaidPayment = await Payment.findOne({
       adoption: adoption._id,
+      paymentType: "adoption_fee",
       status: "paid",
     });
 
@@ -82,6 +83,7 @@ const createAdoptionFeeOrder = async (req, res) => {
     // Reuse an existing unpaid order
     const existingPayment = await Payment.findOne({
       adoption: adoption._id,
+      paymentType: "adoption_fee",
       status: "created",
     }).sort({
       createdAt: -1,
@@ -89,7 +91,9 @@ const createAdoptionFeeOrder = async (req, res) => {
 
     if (existingPayment) {
       return res.status(200).json({
-        message: "Payment order already created",
+        message:
+          "Payment order already created",
+
         paymentRequired: true,
 
         order: {
@@ -108,19 +112,23 @@ const createAdoptionFeeOrder = async (req, res) => {
       pet.adoptionFee * 100,
     );
 
-    const razorpayOrder = await razorpay.orders.create({
-      amount: amountInPaise,
-      currency: "INR",
+    const razorpayOrder =
+      await razorpay.orders.create({
+        amount: amountInPaise,
+        currency: "INR",
 
-      receipt: `adoption_${adoption._id}`,
+        receipt: `adoption_${adoption._id}`,
 
-      notes: {
-        adoptionId: adoption._id.toString(),
-        petId: pet._id.toString(),
-        adopterId: req.user._id.toString(),
-        paymentType: "adoption_fee",
-      },
-    });
+        notes: {
+          adoptionId:
+            adoption._id.toString(),
+          petId: pet._id.toString(),
+          adopterId:
+            req.user._id.toString(),
+          paymentType:
+            "adoption_fee",
+        },
+      });
 
     const payment = await Payment.create({
       adoption: adoption._id,
@@ -129,7 +137,8 @@ const createAdoptionFeeOrder = async (req, res) => {
       amount: pet.adoptionFee,
       currency: "INR",
       paymentType: "adoption_fee",
-      razorpayOrderId: razorpayOrder.id,
+      razorpayOrderId:
+        razorpayOrder.id,
       status: "created",
     });
 
@@ -163,7 +172,7 @@ const createAdoptionFeeOrder = async (req, res) => {
   }
 };
 
-// Verify Razorpay payment after successful Checkout
+// Verify Razorpay adoption fee payment
 const verifyAdoptionFeePayment = async (req, res) => {
   try {
     const {
@@ -184,12 +193,15 @@ const verifyAdoptionFeePayment = async (req, res) => {
     }
 
     const payment = await Payment.findOne({
-      razorpayOrderId: razorpay_order_id,
+      razorpayOrderId:
+        razorpay_order_id,
+      paymentType: "adoption_fee",
     });
 
     if (!payment) {
       return res.status(404).json({
-        message: "Payment record not found",
+        message:
+          "Payment record not found",
       });
     }
 
@@ -221,7 +233,10 @@ const verifyAdoptionFeePayment = async (req, res) => {
       )
       .digest("hex");
 
-    if (generatedSignature !== razorpay_signature) {
+    if (
+      generatedSignature !==
+      razorpay_signature
+    ) {
       payment.status = "failed";
 
       await payment.save();
@@ -263,7 +278,10 @@ const verifyAdoptionFeePayment = async (req, res) => {
 };
 
 // Adopter views payment status for own adoption
-const getAdoptionPaymentStatus = async (req, res) => {
+const getAdoptionPaymentStatus = async (
+  req,
+  res,
+) => {
   try {
     const adoption = await Adoption.findById(
       req.params.adoptionId,
@@ -271,7 +289,8 @@ const getAdoptionPaymentStatus = async (req, res) => {
 
     if (!adoption) {
       return res.status(404).json({
-        message: "Adoption application not found",
+        message:
+          "Adoption application not found",
       });
     }
 
@@ -285,7 +304,9 @@ const getAdoptionPaymentStatus = async (req, res) => {
       });
     }
 
-    const pet = await Pet.findById(adoption.pet);
+    const pet = await Pet.findById(
+      adoption.pet,
+    );
 
     if (!pet) {
       return res.status(404).json({
@@ -313,7 +334,8 @@ const getAdoptionPaymentStatus = async (req, res) => {
 
     res.status(200).json({
       paymentRequired: true,
-      paid: payment?.status === "paid",
+      paid:
+        payment?.status === "paid",
       adoptionFee: pet.adoptionFee,
       payment: payment || null,
     });
@@ -338,11 +360,14 @@ const getAdoptionPaymentStatusForStaff = async (
 
     if (!adoption) {
       return res.status(404).json({
-        message: "Adoption application not found",
+        message:
+          "Adoption application not found",
       });
     }
 
-    const pet = await Pet.findById(adoption.pet);
+    const pet = await Pet.findById(
+      adoption.pet,
+    );
 
     if (!pet) {
       return res.status(404).json({
@@ -370,7 +395,8 @@ const getAdoptionPaymentStatusForStaff = async (
 
     res.status(200).json({
       paymentRequired: true,
-      paid: payment?.status === "paid",
+      paid:
+        payment?.status === "paid",
       adoptionFee: pet.adoptionFee,
       payment: payment || null,
     });
@@ -383,9 +409,274 @@ const getAdoptionPaymentStatusForStaff = async (
   }
 };
 
+/*
+  DONATIONS
+*/
+
+// Create a Razorpay order for a donation
+const createDonationOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    const donationAmount = Number(amount);
+
+    if (
+      !Number.isFinite(donationAmount) ||
+      donationAmount < 1
+    ) {
+      return res.status(400).json({
+        message:
+          "Please enter a valid donation amount",
+      });
+    }
+
+    // Limit to two decimal places.
+    const normalizedAmount =
+      Math.round(
+        donationAmount * 100,
+      ) / 100;
+
+    const amountInPaise =
+      Math.round(
+        normalizedAmount * 100,
+      );
+
+    const razorpayOrder =
+      await razorpay.orders.create({
+        amount: amountInPaise,
+        currency: "INR",
+
+        receipt: `don_${Date.now()}`,
+
+        notes: {
+          adopterId:
+            req.user._id.toString(),
+          paymentType: "donation",
+        },
+      });
+
+    const payment =
+      await Payment.create({
+        adoption: null,
+        pet: null,
+        adopter: req.user._id,
+        amount: normalizedAmount,
+        currency: "INR",
+        paymentType: "donation",
+        razorpayOrderId:
+          razorpayOrder.id,
+        status: "created",
+      });
+
+    res.status(201).json({
+      message:
+        "Donation payment order created successfully",
+
+      order: {
+        id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency:
+          razorpayOrder.currency,
+      },
+
+      amount: normalizedAmount,
+
+      keyId:
+        process.env.RAZORPAY_KEY_ID,
+
+      paymentId: payment._id,
+    });
+  } catch (error) {
+    console.error(
+      "Create donation order error:",
+      error,
+    );
+
+    res.status(500).json({
+      message:
+        "Failed to create donation payment order",
+      error: error.message,
+    });
+  }
+};
+
+// Verify a donation payment
+const verifyDonationPayment = async (
+  req,
+  res,
+) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
+
+    if (
+      !razorpay_order_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature
+    ) {
+      return res.status(400).json({
+        message:
+          "Payment verification details are required",
+      });
+    }
+
+    const payment =
+      await Payment.findOne({
+        razorpayOrderId:
+          razorpay_order_id,
+        paymentType: "donation",
+      });
+
+    if (!payment) {
+      return res.status(404).json({
+        message:
+          "Donation payment record not found",
+      });
+    }
+
+    if (
+      payment.adopter.toString() !==
+      req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        message:
+          "You are not allowed to verify this donation",
+      });
+    }
+
+    if (payment.status === "paid") {
+      return res.status(200).json({
+        message:
+          "Donation has already been verified",
+        payment,
+      });
+    }
+
+    const generatedSignature = crypto
+      .createHmac(
+        "sha256",
+        process.env.RAZORPAY_KEY_SECRET,
+      )
+      .update(
+        `${razorpay_order_id}|${razorpay_payment_id}`,
+      )
+      .digest("hex");
+
+    if (
+      generatedSignature !==
+      razorpay_signature
+    ) {
+      payment.status = "failed";
+
+      await payment.save();
+
+      return res.status(400).json({
+        message:
+          "Donation payment verification failed",
+      });
+    }
+
+    payment.razorpayPaymentId =
+      razorpay_payment_id;
+
+    payment.razorpaySignature =
+      razorpay_signature;
+
+    payment.status = "paid";
+    payment.paidAt = new Date();
+
+    await payment.save();
+
+    res.status(200).json({
+      message:
+        "Thank you! Your donation was successful.",
+      payment,
+    });
+  } catch (error) {
+    console.error(
+      "Verify donation payment error:",
+      error,
+    );
+
+    res.status(500).json({
+      message:
+        "Failed to verify donation payment",
+      error: error.message,
+    });
+  }
+};
+
+// Adopter views their successful donations
+const getMyDonations = async (req, res) => {
+  try {
+    const donations =
+      await Payment.find({
+        adopter: req.user._id,
+        paymentType: "donation",
+        status: "paid",
+      }).sort({
+        paidAt: -1,
+      });
+
+    res.status(200).json({
+      donations,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "Failed to retrieve donations",
+      error: error.message,
+    });
+  }
+};
+
+// Admin views all successful donations
+const getAllDonations = async (req, res) => {
+  try {
+    const donations =
+      await Payment.find({
+        paymentType: "donation",
+        status: "paid",
+      })
+        .populate(
+          "adopter",
+          "name email phone",
+        )
+        .sort({
+          paidAt: -1,
+        });
+
+    const totalDonations =
+      donations.reduce(
+        (total, donation) =>
+          total + donation.amount,
+        0,
+      );
+
+    res.status(200).json({
+      donations,
+      totalDonations,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message:
+        "Failed to retrieve donations",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createAdoptionFeeOrder,
   verifyAdoptionFeePayment,
   getAdoptionPaymentStatus,
   getAdoptionPaymentStatusForStaff,
+
+  createDonationOrder,
+  verifyDonationPayment,
+  getMyDonations,
+  getAllDonations,
 };

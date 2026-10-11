@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Donate from "./pages/Donate";
 
 import PetList from "./pages/pets/PetList";
 import PetDetails from "./pages/pets/PetDetails";
@@ -47,11 +48,30 @@ const App = () => {
 
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/pets" element={<PetList />} />
-          <Route path="/pets/:id" element={<PetDetails />} />
+          <Route
+            path="/"
+            element={<Home />}
+          />
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
+
+          <Route
+            path="/pets"
+            element={<PetList />}
+          />
+
+          <Route
+            path="/pets/:id"
+            element={<PetDetails />}
+          />
 
           {/* Profile */}
           <Route
@@ -63,11 +83,25 @@ const App = () => {
             }
           />
 
+          {/* Donations */}
+          <Route
+            path="/donate"
+            element={
+              <ProtectedRoute
+                allowedRoles={["adopter"]}
+              >
+                <Donate />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Admin */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -76,7 +110,9 @@ const App = () => {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
                 <UserManagement />
               </ProtectedRoute>
             }
@@ -85,7 +121,9 @@ const App = () => {
           <Route
             path="/admin/create-staff"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
                 <CreateStaff />
               </ProtectedRoute>
             }
@@ -94,7 +132,9 @@ const App = () => {
           <Route
             path="/admin/complaints"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute
+                allowedRoles={["admin"]}
+              >
                 <ManageComplaints />
               </ProtectedRoute>
             }
@@ -105,7 +145,10 @@ const App = () => {
             path="/staff"
             element={
               <ProtectedRoute
-                allowedRoles={["staff", "admin"]}
+                allowedRoles={[
+                  "staff",
+                  "admin",
+                ]}
               >
                 <StaffDashboard />
               </ProtectedRoute>
@@ -116,7 +159,10 @@ const App = () => {
             path="/staff/pets"
             element={
               <ProtectedRoute
-                allowedRoles={["staff", "admin"]}
+                allowedRoles={[
+                  "staff",
+                  "admin",
+                ]}
               >
                 <ManagePets />
               </ProtectedRoute>
@@ -127,7 +173,9 @@ const App = () => {
           <Route
             path="/my-applications"
             element={
-              <ProtectedRoute allowedRoles={["adopter"]}>
+              <ProtectedRoute
+                allowedRoles={["adopter"]}
+              >
                 <MyApplications />
               </ProtectedRoute>
             }
@@ -137,7 +185,10 @@ const App = () => {
             path="/manage-adoptions"
             element={
               <ProtectedRoute
-                allowedRoles={["admin", "staff"]}
+                allowedRoles={[
+                  "admin",
+                  "staff",
+                ]}
               >
                 <ManageAdoptions />
               </ProtectedRoute>
@@ -148,7 +199,9 @@ const App = () => {
           <Route
             path="/my-appointments"
             element={
-              <ProtectedRoute allowedRoles={["adopter"]}>
+              <ProtectedRoute
+                allowedRoles={["adopter"]}
+              >
                 <MyAppointments />
               </ProtectedRoute>
             }
@@ -158,18 +211,23 @@ const App = () => {
             path="/manage-appointments"
             element={
               <ProtectedRoute
-                allowedRoles={["admin", "staff"]}
+                allowedRoles={[
+                  "admin",
+                  "staff",
+                ]}
               >
                 <ManageAppointments />
               </ProtectedRoute>
             }
           />
 
-          {/* Complaints / Reports */}
+          {/* Feedback */}
           <Route
             path="/my-complaints"
             element={
-              <ProtectedRoute allowedRoles={["adopter"]}>
+              <ProtectedRoute
+                allowedRoles={["adopter"]}
+              >
                 <MyComplaints />
               </ProtectedRoute>
             }

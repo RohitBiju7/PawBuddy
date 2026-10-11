@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   Link,
   useNavigate,
@@ -36,9 +37,7 @@ const Navbar = () => {
   const [anchorEl, setAnchorEl] =
     useState(null);
 
-  const handleMenuOpen = (
-    event,
-  ) => {
+  const handleMenuOpen = (event) => {
     setAnchorEl(
       event.currentTarget,
     );
@@ -69,8 +68,7 @@ const Navbar = () => {
       sx={{
         backgroundColor:
           "background.paper",
-        borderBottom:
-          "1px solid",
+        borderBottom: "1px solid",
         borderColor: "divider",
         color: "text.primary",
       }}
@@ -174,6 +172,14 @@ const Navbar = () => {
                       color="inherit"
                     >
                       My Feedback
+                    </Button>
+
+                    <Button
+                      component={Link}
+                      to="/donate"
+                      color="inherit"
+                    >
+                      Donate
                     </Button>
                   </>
                 )}
@@ -390,6 +396,18 @@ const Navbar = () => {
                         }
                       >
                         My Feedback
+                      </MenuItem>
+
+                      <MenuItem
+                        component={
+                          Link
+                        }
+                        to="/donate"
+                        onClick={
+                          handleMenuClose
+                        }
+                      >
+                        Donate
                       </MenuItem>
                     </>
                   )}
