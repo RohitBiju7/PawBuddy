@@ -26,7 +26,7 @@ import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
-import pawBuddyHero from "../assets/pawbuddy-hero.svg";
+import pawBuddyHero from "../assets/register-login.png";
 
 const Register = () => {
   const navigate = useNavigate();

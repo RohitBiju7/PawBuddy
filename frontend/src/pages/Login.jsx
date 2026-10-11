@@ -24,7 +24,7 @@ import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
-import pawBuddyHero from "../assets/pawbuddy-hero.svg";
+import pawBuddyHero from "../assets/register-login.png";
 
 const Login = () => {
   const navigate = useNavigate();

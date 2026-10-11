@@ -19,14 +19,13 @@ import EventAvailableRoundedIcon from "@mui/icons-material/EventAvailableRounded
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 
-import pawBuddyHero from "../assets/pawbuddy-hero.svg";
+import pawBuddyHero from "../assets/pawbuddy-hero.png";
 
 const Home = () => {
   const token = localStorage.getItem("token");
 
   const adoptionSteps = [
     {
-      number: "01",
       title: "Find your companion",
       description:
         "Explore pets looking for a loving home. Browse their profiles and discover your perfect match.",
@@ -35,7 +34,6 @@ const Home = () => {
       iconColor: "#2F7D6D",
     },
     {
-      number: "02",
       title: "Apply for adoption",
       description:
         "Found someone special? Submit an adoption application and follow its progress through PawBuddy.",
@@ -44,7 +42,6 @@ const Home = () => {
       iconColor: "#D97855",
     },
     {
-      number: "03",
       title: "Meet & welcome",
       description:
         "Once approved, arrange an appointment and take the next steps toward welcoming your new friend.",

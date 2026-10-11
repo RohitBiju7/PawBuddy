@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
-
 import {
   getAllPets,
   addPet,
   updatePet,
   deletePet,
 } from "../../services/petService";
-
 import {
   Box,
   Container,
@@ -27,7 +25,6 @@ import {
   CircularProgress,
   Divider,
 } from "@mui/material";
-
 import PetsRoundedIcon from "@mui/icons-material/PetsRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -39,7 +36,6 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-
 const initialFormData = {
   name: "",
   species: "dog",
@@ -51,16 +47,13 @@ const initialFormData = {
   vaccinationStatus: "not vaccinated",
   adoptionFee: "",
 };
-
 const formatLabel = (value) => {
   if (value === null || value === undefined || value === "") {
     return "Not specified";
   }
-
   const text = String(value);
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
-
 const getStatusAppearance = (status) => {
   if (status === "available") {
     return {
@@ -69,7 +62,6 @@ const getStatusAppearance = (status) => {
       color: "#246A52",
     };
   }
-
   if (status === "pending") {
     return {
       label: "Reserved",
@@ -77,7 +69,6 @@ const getStatusAppearance = (status) => {
       color: "#95621F",
     };
   }
-
   if (status === "adopted") {
     return {
       label: "Adopted",
@@ -85,34 +76,28 @@ const getStatusAppearance = (status) => {
       color: "#397A98",
     };
   }
-
   return {
     label: formatLabel(status),
     background: "#EDF1EF",
     color: "#60746D",
   };
 };
-
 const ManagePets = () => {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const [open, setOpen] = useState(false);
   const [editingPet, setEditingPet] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
-
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [formData, setFormData] = useState(initialFormData);
-
   const fetchPets = async () => {
     try {
       setLoading(true);
       setError("");
-
       const data = await getAllPets();
       setPets(data.pets || []);
     } catch (error) {
@@ -124,11 +109,9 @@ const ManagePets = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchPets();
   }, []);
-
   // Release temporary image previews after replacement or dialog closure.
   useEffect(() => {
     return () => {
@@ -137,14 +120,12 @@ const ManagePets = () => {
       }
     };
   }, [imagePreview]);
-
   const handleChange = (event) => {
     setFormData((current) => ({
       ...current,
       [event.target.name]: event.target.value,
     }));
   };
-
   const handleAddOpen = () => {
     setEditingPet(null);
     setFormData({ ...initialFormData });
@@ -154,7 +135,6 @@ const ManagePets = () => {
     setSuccess("");
     setOpen(true);
   };
-
   const handleEditOpen = (pet) => {
     if (pet.status !== "available") {
       setError(
@@ -162,7 +142,6 @@ const ManagePets = () => {
       );
       return;
     }
-
     setEditingPet(pet);
     setFormData({
       name: pet.name,
@@ -175,21 +154,18 @@ const ManagePets = () => {
       vaccinationStatus: pet.vaccinationStatus,
       adoptionFee: pet.adoptionFee,
     });
-
     setImage(null);
     setImagePreview(
       pet.image
-        ? `http://localhost:5000/uploads/${pet.image}`
+        ? `/uploads/${pet.image}`
         : "",
     );
     setError("");
     setSuccess("");
     setOpen(true);
   };
-
   const handleClose = () => {
     if (submitting) return;
-
     setOpen(false);
     setEditingPet(null);
     setFormData({ ...initialFormData });
@@ -197,26 +173,20 @@ const ManagePets = () => {
     setImagePreview("");
     setError("");
   };
-
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
   };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (submitting) return;
-
     setError("");
     setSuccess("");
     setSubmitting(true);
-
     try {
       const petData = new FormData();
-
       petData.append("name", formData.name);
       petData.append("species", formData.species);
       petData.append("breed", formData.breed);
@@ -226,23 +196,19 @@ const ManagePets = () => {
       petData.append("healthStatus", formData.healthStatus);
       petData.append("vaccinationStatus", formData.vaccinationStatus);
       petData.append("adoptionFee", formData.adoptionFee);
-
       if (image) {
         petData.append("image", image);
       }
-
       if (editingPet) {
         await updatePet(editingPet._id, petData);
       } else {
         await addPet(petData);
       }
-
       setOpen(false);
       setEditingPet(null);
       setFormData({ ...initialFormData });
       setImage(null);
       setImagePreview("");
-
       await fetchPets();
       setSuccess(
         editingPet
@@ -258,30 +224,24 @@ const ManagePets = () => {
       setSubmitting(false);
     }
   };
-
   const handleDelete = async (pet) => {
     let confirmationMessage =
       `Are you sure you want to permanently delete ${pet.name}?`;
-
     if (pet.status === "pending") {
       confirmationMessage =
         `${pet.name} currently has an adoption in progress. ` +
         "Deleting it may cancel affected applications and notify adopters. Continue?";
     }
-
     if (pet.status === "adopted") {
       confirmationMessage =
         `${pet.name} has already been adopted. ` +
         "Are you sure you want to permanently remove this pet from PawBuddy?";
     }
-
     if (!window.confirm(confirmationMessage)) return;
-
     try {
       setDeletingId(pet._id);
       setError("");
       setSuccess("");
-
       const data = await deletePet(pet._id);
       setPets((currentPets) =>
         currentPets.filter((currentPet) => currentPet._id !== pet._id),
@@ -295,7 +255,6 @@ const ManagePets = () => {
       setDeletingId(null);
     }
   };
-
   const summary = [
     {
       label: "Total Pets",
@@ -326,7 +285,6 @@ const ManagePets = () => {
       color: "#397A98",
     },
   ];
-
   return (
     <Box
       sx={{
@@ -361,7 +319,6 @@ const ManagePets = () => {
               pointerEvents: "none",
             }}
           />
-
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={3}
@@ -379,7 +336,6 @@ const ManagePets = () => {
                   SHELTER WORKSPACE
                 </Typography>
               </Stack>
-
               <Typography
                 component="h1"
                 sx={{
@@ -393,13 +349,11 @@ const ManagePets = () => {
               >
                 Manage <Box component="span" sx={{ color: "primary.main" }}>Pets</Box>
               </Typography>
-
               <Typography color="text.secondary" sx={{ lineHeight: 1.8 }}>
                 Keep every pet's profile up to date and help more animals find
                 their forever homes.
               </Typography>
             </Box>
-
             <Button
               variant="contained"
               startIcon={<AddRoundedIcon />}
@@ -418,15 +372,12 @@ const ManagePets = () => {
             </Button>
           </Stack>
         </Box>
-
         {error && !open && (
           <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
         )}
-
         {success && (
           <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>
         )}
-
         {loading ? (
           <Stack
             alignItems="center"
@@ -486,7 +437,6 @@ const ManagePets = () => {
                 </Grid>
               ))}
             </Grid>
-
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
@@ -511,14 +461,12 @@ const ManagePets = () => {
                 Refresh
               </Button>
             </Stack>
-
             {/* Pet cards */}
             <Grid container spacing={3}>
               {pets.map((pet) => {
                 const status = getStatusAppearance(pet.status);
                 const canEdit = pet.status === "available";
                 const fee = Number(pet.adoptionFee || 0);
-
                 return (
                   <Grid key={pet._id} size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card
@@ -548,7 +496,7 @@ const ManagePets = () => {
                         {pet.image ? (
                           <Box
                             component="img"
-                            src={`http://localhost:5000/uploads/${pet.image}`}
+                            src={`/uploads/${pet.image}`}
                             alt={pet.name}
                             loading="lazy"
                             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -566,7 +514,6 @@ const ManagePets = () => {
                             </Typography>
                           </Stack>
                         )}
-
                         <Chip
                           label={status.label}
                           size="small"
@@ -581,7 +528,6 @@ const ManagePets = () => {
                           }}
                         />
                       </Box>
-
                       <CardContent
                         sx={{
                           p: { xs: 2.5, sm: 3 },
@@ -597,7 +543,6 @@ const ManagePets = () => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
                           {formatLabel(pet.species)} · {pet.breed || "Mixed breed"}
                         </Typography>
-
                         <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
                           {[
                             ["Age", pet.age],
@@ -632,7 +577,6 @@ const ManagePets = () => {
                             </Grid>
                           ))}
                         </Grid>
-
                         <Box
                           sx={{
                             p: 2,
@@ -653,7 +597,6 @@ const ManagePets = () => {
                             {fee === 0 ? "Free" : `₹${fee.toLocaleString("en-IN")}`}
                           </Typography>
                         </Box>
-
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -661,9 +604,7 @@ const ManagePets = () => {
                         >
                           {pet.description || "No description provided."}
                         </Typography>
-
                         <Divider sx={{ mt: "auto", mb: 2 }} />
-
                         {!canEdit && (
                           <Alert
                             icon={<LockOutlinedIcon fontSize="inherit" />}
@@ -675,7 +616,6 @@ const ManagePets = () => {
                               : "This pet has been adopted. Pet details are locked."}
                           </Alert>
                         )}
-
                         <Stack direction="row" spacing={1.5}>
                           {canEdit && (
                             <Button
@@ -709,7 +649,6 @@ const ManagePets = () => {
                   </Grid>
                 );
               })}
-
               {pets.length === 0 && (
                 <Grid size={{ xs: 12 }}>
                   <Box
@@ -755,7 +694,6 @@ const ManagePets = () => {
             </Grid>
           </>
         )}
-
         {/* Add / edit pet dialog */}
         <Dialog
           open={open}
@@ -764,14 +702,18 @@ const ManagePets = () => {
           maxWidth="md"
           scroll="paper"
           slotProps={{
-            paper: { sx: { borderRadius: "22px", overflow: "hidden" } },
+            paper: {
+              component: "form",
+              onSubmit: handleSubmit,
+              sx: { borderRadius: "22px", overflow: "hidden" },
+            },
           }}
         >
-          <Box component="form" onSubmit={handleSubmit}>
             <Box
               sx={{
                 background: "linear-gradient(115deg, #E8F5EE 0%, #FFF5ED 100%)",
                 p: { xs: 3, sm: 4 },
+                flexShrink: 0,
               }}
             >
               <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -802,18 +744,17 @@ const ManagePets = () => {
                 </Box>
               </Stack>
             </Box>
-
-            <DialogContent sx={{ p: { xs: 3, sm: 4 } }}>
+            <DialogContent
+              sx={{ p: { xs: 3, sm: 4 }, minHeight: 0, overflowY: "auto" }}
+            >
               {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                   {error}
                 </Alert>
               )}
-
               <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
                 Basic Information
               </Typography>
-
               <Grid container spacing={2.5}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
@@ -889,11 +830,9 @@ const ManagePets = () => {
                   />
                 </Grid>
               </Grid>
-
               <Divider sx={{ my: 3 }} />
-
               <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
-                Health &amp; Description
+                Health & Description
               </Typography>
               <Grid container spacing={2.5}>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -934,16 +873,13 @@ const ManagePets = () => {
                   />
                 </Grid>
               </Grid>
-
               <Divider sx={{ my: 3 }} />
-
               <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1 }}>
                 Pet Photograph
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
                 Upload a JPEG, PNG or WebP image. You can leave this blank.
               </Typography>
-
               <Box
                 sx={{
                   border: "1.5px dashed #BEDBCB",
@@ -981,7 +917,6 @@ const ManagePets = () => {
                       <ImageOutlinedIcon sx={{ fontSize: 34 }} />
                     </Box>
                   )}
-
                   <Button
                     variant="outlined"
                     component="label"
@@ -1012,11 +947,11 @@ const ManagePets = () => {
                 </Stack>
               </Box>
             </DialogContent>
-
             <DialogActions
               sx={{
                 borderTop: "1px solid #E7EEE9",
                 p: { xs: 2.5, sm: 3 },
+                flexShrink: 0,
                 gap: 1,
               }}
             >
@@ -1037,11 +972,9 @@ const ManagePets = () => {
                     : "Add Pet"}
               </Button>
             </DialogActions>
-          </Box>
         </Dialog>
       </Container>
     </Box>
   );
 };
-
 export default ManagePets;

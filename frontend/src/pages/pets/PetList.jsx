@@ -34,9 +34,7 @@ const defaultFilters = {
 };
 
 const formatLabel = (value) =>
-  value
-    ? value.charAt(0).toUpperCase() + value.slice(1)
-    : "Not specified";
+  value ? value.charAt(0).toUpperCase() + value.slice(1) : "Not specified";
 
 const getStatusAppearance = (status) => {
   if (status === "available") {
@@ -144,10 +142,7 @@ const PetList = () => {
         pb: { xs: 8, md: 12 },
       }}
     >
-      <Container
-        maxWidth="lg"
-        sx={{ pt: { xs: 3, md: 5 } }}
-      >
+      <Container maxWidth="lg" sx={{ pt: { xs: 3, md: 5 } }}>
         {/* Page Introduction */}
         <Box
           sx={{
@@ -222,11 +217,9 @@ const PetList = () => {
               }}
             >
               Find your new
-              <Box
-                component="span"
-                sx={{ color: "primary.main" }}
-              >
-                {" "}best friend.
+              <Box component="span" sx={{ color: "primary.main" }}>
+                {" "}
+                best friend.
               </Box>
             </Typography>
 
@@ -241,9 +234,8 @@ const PetList = () => {
                 },
               }}
             >
-              A loving companion could be just a few
-              clicks away. Explore pet profiles and
-              find the right buddy for your home.
+              A loving companion could be just a few clicks away. Explore pet
+              profiles and find the right buddy for your home.
             </Typography>
           </Box>
         </Box>
@@ -262,8 +254,7 @@ const PetList = () => {
             backgroundColor: "#FFFFFF",
             border: "1px solid #E3EBE7",
             borderRadius: "20px",
-            boxShadow:
-              "0 12px 32px rgba(36,79,62,0.08)",
+            boxShadow: "0 12px 32px rgba(36,79,62,0.08)",
           }}
         >
           <Stack
@@ -289,11 +280,7 @@ const PetList = () => {
             </Typography>
           </Stack>
 
-          <Grid
-            container
-            spacing={2}
-            alignItems="flex-start"
-          >
+          <Grid container spacing={2} alignItems="flex-start">
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 label="Name or breed"
@@ -327,18 +314,10 @@ const PetList = () => {
                 onChange={handleFilterChange}
                 fullWidth
               >
-                <MenuItem value="">
-                  All species
-                </MenuItem>
-                <MenuItem value="dog">
-                  Dogs
-                </MenuItem>
-                <MenuItem value="cat">
-                  Cats
-                </MenuItem>
-                <MenuItem value="other">
-                  Other
-                </MenuItem>
+                <MenuItem value="">All species</MenuItem>
+                <MenuItem value="dog">Dogs</MenuItem>
+                <MenuItem value="cat">Cats</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
               </TextField>
             </Grid>
 
@@ -351,15 +330,9 @@ const PetList = () => {
                 onChange={handleFilterChange}
                 fullWidth
               >
-                <MenuItem value="">
-                  All genders
-                </MenuItem>
-                <MenuItem value="male">
-                  Male
-                </MenuItem>
-                <MenuItem value="female">
-                  Female
-                </MenuItem>
+                <MenuItem value="">All genders</MenuItem>
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
               </TextField>
             </Grid>
 
@@ -378,18 +351,10 @@ const PetList = () => {
                 onChange={handleFilterChange}
                 fullWidth
               >
-                <MenuItem value="">
-                  All statuses
-                </MenuItem>
-                <MenuItem value="available">
-                  Available
-                </MenuItem>
-                <MenuItem value="pending">
-                  Reserved
-                </MenuItem>
-                <MenuItem value="adopted">
-                  Adopted
-                </MenuItem>
+                <MenuItem value="">All statuses</MenuItem>
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="pending">Reserved</MenuItem>
+                <MenuItem value="adopted">Adopted</MenuItem>
               </TextField>
             </Grid>
 
@@ -459,12 +424,8 @@ const PetList = () => {
               Meet the pets
             </Typography>
 
-            <Typography
-              variant="body2"
-              color="text.secondary"
-            >
-              Discover the personalities waiting
-              to meet you.
+            <Typography variant="body2" color="text.secondary">
+              Discover the personalities waiting to meet you.
             </Typography>
           </Box>
 
@@ -483,10 +444,7 @@ const PetList = () => {
         </Stack>
 
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 3 }}
-          >
+          <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
@@ -500,21 +458,16 @@ const PetList = () => {
           >
             <CircularProgress />
 
-            <Typography
-              color="text.secondary"
-              variant="body2"
-            >
+            <Typography color="text.secondary" variant="body2">
               Finding your future companion...
             </Typography>
           </Stack>
         ) : (
           <Grid container spacing={3}>
             {pets.map((pet) => {
-              const status =
-                getStatusAppearance(pet.status);
+              const status = getStatusAppearance(pet.status);
 
-              const fee =
-                Number(pet.adoptionFee || 0);
+              const fee = Number(pet.adoptionFee || 0);
 
               return (
                 <Grid
@@ -533,15 +486,12 @@ const PetList = () => {
                       borderRadius: "21px",
                       overflow: "hidden",
                       border: "1px solid #E2ECE6",
-                      boxShadow:
-                        "0 6px 20px rgba(39,81,62,0.05)",
-                      transition:
-                        "transform 0.25s ease, box-shadow 0.25s ease",
+                      boxShadow: "0 6px 20px rgba(39,81,62,0.05)",
+                      transition: "transform 0.25s ease, box-shadow 0.25s ease",
 
                       "&:hover": {
                         transform: "translateY(-5px)",
-                        boxShadow:
-                          "0 15px 30px rgba(39,81,62,0.12)",
+                        boxShadow: "0 15px 30px rgba(39,81,62,0.12)",
                       },
 
                       "&:hover .pet-photo": {
@@ -562,15 +512,14 @@ const PetList = () => {
                         <Box
                           component="img"
                           className="pet-photo"
-                          src={`http://localhost:5000/uploads/${pet.image}`}
+                          src={`/uploads/${pet.image}`}
                           alt={pet.name}
                           loading="lazy"
                           sx={{
                             width: "100%",
                             height: "100%",
                             objectFit: "cover",
-                            transition:
-                              "transform 0.4s ease",
+                            transition: "transform 0.4s ease",
                           }}
                         />
                       ) : (
@@ -583,14 +532,9 @@ const PetList = () => {
                             color: "#86B4A4",
                           }}
                         >
-                          <PetsRoundedIcon
-                            sx={{ fontSize: 66 }}
-                          />
+                          <PetsRoundedIcon sx={{ fontSize: 66 }} />
 
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
+                          <Typography variant="body2" color="text.secondary">
                             No Image Available
                           </Typography>
                         </Stack>
@@ -607,8 +551,7 @@ const PetList = () => {
                           fontWeight: 750,
                           bgcolor: status.background,
                           color: status.foreground,
-                          boxShadow:
-                            "0 2px 8px rgba(0,0,0,0.07)",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
                         }}
                       />
                     </Box>
@@ -651,21 +594,14 @@ const PetList = () => {
                       <Box
                         sx={{
                           display: "grid",
-                          gridTemplateColumns:
-                            "repeat(2, minmax(0, 1fr))",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                           gap: 2,
                           mb: 2.5,
                         }}
                       >
                         {[
-                          [
-                            "Age",
-                            pet.age ?? "Not specified",
-                          ],
-                          [
-                            "Gender",
-                            formatLabel(pet.gender),
-                          ],
+                          ["Age", pet.age ?? "Not specified"],
+                          ["Gender", formatLabel(pet.gender)],
                         ].map(([label, value]) => (
                           <Box key={label}>
                             <Typography
@@ -703,12 +639,16 @@ const PetList = () => {
                       <Stack
                         direction="row"
                         alignItems="center"
-                        justifyContent="space-between"
-                        sx={{ mb: 2 }}
+                        sx={{
+                          mb: 2,
+                          width: "100%",
+                          gap: 2,
+                        }}
                       >
                         <Typography
                           variant="body2"
                           color="text.secondary"
+                          sx={{ flexGrow: 1 }}
                         >
                           Adoption fee
                         </Typography>
@@ -717,13 +657,14 @@ const PetList = () => {
                           sx={{
                             fontWeight: 800,
                             color: "primary.main",
+                            ml: "auto",
+                            whiteSpace: "nowrap",
+                            textAlign: "right",
                           }}
                         >
                           {fee === 0
                             ? "Free"
-                            : `₹${fee.toLocaleString(
-                                "en-IN",
-                              )}`}
+                            : `₹${fee.toLocaleString("en-IN")}`}
                         </Typography>
                       </Stack>
 
@@ -732,9 +673,7 @@ const PetList = () => {
                         to={`/pets/${pet._id}`}
                         variant="contained"
                         fullWidth
-                        endIcon={
-                          <ArrowForwardRoundedIcon />
-                        }
+                        endIcon={<ArrowForwardRoundedIcon />}
                         sx={{
                           py: 1.25,
                           borderRadius: "11px",
@@ -781,12 +720,9 @@ const PetList = () => {
                     No pets found
                   </Typography>
 
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                  >
-                    Try changing the search term or
-                    filters to explore more pets.
+                  <Typography variant="body2" color="text.secondary">
+                    Try changing the search term or filters to explore more
+                    pets.
                   </Typography>
                 </Box>
               </Grid>

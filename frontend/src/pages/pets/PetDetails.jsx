@@ -554,7 +554,7 @@ const PetDetails = () => {
               {pet.image ? (
                 <Box
                   component="img"
-                  src={`http://localhost:5000/uploads/${pet.image}`}
+                  src={`/uploads/${pet.image}`}
                   alt={pet.name}
                   sx={{
                     position: "absolute",

@@ -264,39 +264,6 @@ const MyAppointments = () => {
     "45",
   ];
 
-  const summary = [
-    {
-      label: "Pending",
-      count: appointments.filter((item) => item.status === "pending").length,
-      icon: <HourglassTopRoundedIcon />,
-      background: "#FFF2E1",
-      color: "#A8742B",
-    },
-    {
-      label: "Approved",
-      count: appointments.filter((item) => item.status === "approved").length,
-      icon: <CheckCircleRoundedIcon />,
-      background: "#E2F3E9",
-      color: "#2F7D6D",
-    },
-    {
-      label: "Completed",
-      count: appointments.filter((item) => item.status === "completed").length,
-      icon: <FavoriteRoundedIcon />,
-      background: "#E4F1F6",
-      color: "#4085A3",
-    },
-    {
-      label: "Cancelled / Rejected",
-      count: appointments.filter((item) =>
-        ["cancelled", "rejected"].includes(item.status),
-      ).length,
-      icon: <CancelRoundedIcon />,
-      background: "#FCEAE7",
-      color: "#C66A5C",
-    },
-  ];
-
   const statusMessage = {
     pending: "Your appointment request is waiting for approval from PawBuddy staff.",
     approved: "Your appointment has been approved. Please attend at the scheduled date and time.",
@@ -421,54 +388,6 @@ const MyAppointments = () => {
           </Stack>
         ) : (
           <>
-            {/* Appointment status overview */}
-            <Grid container spacing={2} sx={{ mb: 5 }}>
-              {summary.map((item) => (
-                <Grid key={item.label} size={{ xs: 6, md: 3 }}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      borderRadius: "18px",
-                      border: "1px solid #E3EBE7",
-                      boxShadow: "0 5px 18px rgba(39,81,62,0.04)",
-                    }}
-                  >
-                    <CardContent sx={{ p: { xs: 2, sm: 2.5 }, "&:last-child": { pb: { xs: 2, sm: 2.5 } } }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 0.5, fontWeight: 600, fontSize: { xs: "0.8rem", sm: "0.9rem" } }}
-                          >
-                            {item.label}
-                          </Typography>
-                          <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                            {item.count}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            width: { xs: 38, sm: 46 },
-                            height: { xs: 38, sm: 46 },
-                            borderRadius: "14px",
-                            flexShrink: 0,
-                            backgroundColor: item.background,
-                            color: item.color,
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          {item.icon}
-                        </Box>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-
             {/* Appointment list heading */}
             <Stack
               direction={{ xs: "column", sm: "row" }}

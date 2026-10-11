@@ -407,7 +407,7 @@ const ManageAdoptions = () => {
                         {pet?.image ? (
                           <Box
                             component="img"
-                            src={`http://localhost:5000/uploads/${pet.image}`}
+                            src={`/uploads/${pet.image}`}
                             alt={pet.name}
                             loading="lazy"
                             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
