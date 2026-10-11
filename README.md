@@ -1,176 +1,214 @@
-# PawBuddy 🐾
+﻿# PawBuddy 🐾
 
-PawBuddy is a **Pet Adoption Management System** developed as part of the ICTAK Full Stack Development with Gen AI course.
+PawBuddy is a full-stack pet adoption management system built with the MERN stack. It helps adopters discover pets, apply for adoption, schedule visits, and support shelters through donations, while giving staff and administrators tools to manage listings, applications, appointments, and user access.
 
-The project is designed to help adopters discover pets, allow shelter staff to manage pet records and adoption-related activities, and provide administrators with user and system management features.
+## Overview
 
-## Problem Statement
+The platform is designed to centralize pet adoption workflows that are often scattered across manual communication, spreadsheets, and fragmented records. PawBuddy brings the workflow into one app with:
 
-Pet adoption processes are often handled through disconnected communication channels and manual record keeping. This can make it difficult for adopters, shelter staff, and administrators to efficiently manage pets, users, adoption requests, appointments, and related activities.
-
-PawBuddy aims to provide a centralized web-based system for managing the pet adoption workflow.
+- a public pet catalog for adopters
+- secure authentication and role-based access
+- adoption application tracking
+- staff/admin management tools
+- appointment and complaint workflows
+- donation and payment integration
+- dashboard metrics for administrative oversight
 
 ## Target Users
 
-- **Admin**
-- **Shelter Staff**
-- **Adopters**
+- Adopters
+- Shelter staff
+- Administrators
 
-## Main Features
+## Key Features
 
-### Authentication & User Management
-- Adopter registration
-- Login
-- Password hashing using bcryptjs
-- JWT-based authentication
-- Protected routes
-- Role-based authorization
-- Logged-in user profile
-- Admin creation of Shelter Staff accounts
-- Admin view of all users
-- Admin activation/deactivation of users
+### For Adopters
+- Register and log in securely
+- Browse all available pets
+- Search and filter pets by species, gender, status, and name/breed
+- View pet details and adoption readiness
+- Submit adoption applications
+- Track personal adoption requests and status
+- Request pet visit appointments
+- View profile and update personal details
+- Make adoption fee and donation payments through Razorpay
+- Submit complaints or feedback
 
-### Pet Management
-- Add pets
-- View all pets
-- View individual pet details
-- Update pet details
-- Delete pets
-- Filter pets by species, gender, and status
-- Search pets by name or breed
-- Staff/Admin-only pet management operations
+### For Shelter Staff
+- Add, update, and remove pet listings
+- Manage adoption applications and staff notes
+- Review and update appointment statuses
+- View adoption and appointment reports
+- Manage completed appointments and adoption-related records
 
-### Planned Features
-- Adoption application management
-- Appointment scheduling for adoption/site visits
-- Email notifications
-- Adoption fee payments
-- Donations
-- Admin dashboard and statistics
-- React frontend integration
+### For Admins
+- Create and manage staff accounts
+- View all registered users
+- Activate or deactivate user accounts
+- Monitor adoption, appointment, and donation activity
+- Review complaints submitted by adopters
+- View system dashboard statistics
 
 ## Tech Stack
+
+### Frontend
+- React
+- Vite
+- React Router DOM
+- Axios
+- Material UI
+- Recharts
 
 ### Backend
 - Node.js
 - Express.js
 - MongoDB
 - Mongoose
-- bcryptjs
-- JSON Web Token (JWT)
+- JWT for authentication
+- bcryptjs for password hashing
 - CORS
 - dotenv
-- Nodemon
-
-### Frontend
-Planned using:
-
-- React
-- Vite
-- Axios
-
-The frontend authentication setup will use an Axios interceptor file named:
-
-`axiosInterceptor.js`
+- Razorpay integration
+- Nodemailer support
+- Multer for file uploads
 
 ## Project Structure
 
 ```text
 PawBuddy/
-│
 ├── backend/
 │   ├── config/
-│   │   └── db.js
-│   │
 │   ├── controllers/
-│   │   ├── userController.js
-│   │   └── petController.js
-│   │
 │   ├── middleware/
-│   │   ├── authMiddleware.js
-│   │   └── roleMiddleware.js
-│   │
 │   ├── models/
-│   │   ├── userModel.js
-│   │   └── petModel.js
-│   │
 │   ├── routes/
-│   │   ├── userRoutes.js
-│   │   └── petRoutes.js
-│   │
+│   ├── uploads/
 │   ├── .env
-│   ├── .gitignore
+│   ├── createAdmin.js
 │   ├── package.json
-│   ├── package-lock.json
-│   └── server.js
-│
-└── README.md
+│   ├── server.js
+│   └── ...
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   ├── package.json
+│   ├── vite.config.js
+│   └── ...
+├── docs/
+│   └── project documentation files
+├── .gitignore
+├── README.md
+└── package-lock.json (if present at repo root)
 ```
 
-## Environment Variables
+## Prerequisites
 
-Create a `.env` file inside the `backend` folder.
+Before running the app, make sure you have:
 
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-```
+- Node.js v18 or later
+- npm
+- MongoDB running locally or a MongoDB Atlas connection string
 
-> Do not upload the `.env` file to GitHub.
-
-## Installation and Setup
+## Installation
 
 ### 1. Clone the repository
 
 ```bash
 git clone <your-repository-url>
+cd PawBuddy
 ```
 
-### 2. Open the backend folder
+### 2. Install backend dependencies
 
 ```bash
-cd PawBuddy/backend
-```
-
-### 3. Install dependencies
-
-```bash
+cd backend
 npm install
 ```
 
-### 4. Create the `.env` file
+### 3. Install frontend dependencies
 
-Add:
+```bash
+cd ../frontend
+npm install
+```
+
+## Environment Variables
+
+Create a `.env` file in the `backend` folder and add the following:
 
 ```env
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
+MONGO_URI=mongodb://127.0.0.1:27017/pawbuddy
 JWT_SECRET=your_jwt_secret
+CLIENT_ORIGIN=http://localhost:5173
 ```
 
-### 5. Start the development server
+You may also configure payment or mail-related environment variables if your deployment uses Razorpay or email notifications.
+
+> Do not commit your `.env` file to GitHub.
+
+## Running the Project
+
+### Start the backend
 
 ```bash
+cd backend
 npm run dev
 ```
 
-The backend should run at:
+The backend will run at:
 
 ```text
 http://localhost:5000
 ```
 
+### Start the frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend will run at:
+
+```text
+http://localhost:5173
+```
+
+### Create a default admin account
+
+```bash
+cd backend
+node createAdmin.js
+```
+
+This creates a default admin user with:
+
+- email: `admin@pawbuddy.com`
+- password: `admin123`
+
+## Authentication and Roles
+
+PawBuddy uses JWT-based authentication with role-based access control.
+
+Roles:
+- `adopter`
+- `staff`
+- `admin`
+
+Protected routes validate the token and enforce role permissions before allowing access.
+
 ## API Overview
 
-### Authentication & User Management
+### Authentication and User Management
 
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | POST | `/api/users/register` | Public | Register a new adopter |
-| POST | `/api/users/login` | Public | Login and receive JWT |
-| GET | `/api/users/profile` | Authenticated | Get logged-in user profile |
-| POST | `/api/users/staff` | Admin | Create Shelter Staff account |
+| POST | `/api/users/login` | Public | Log in and receive a JWT |
+| GET | `/api/users/profile` | Authenticated | View logged-in user profile |
+| PATCH | `/api/users/profile` | Adopter / Staff | Update user profile |
+| POST | `/api/users/staff` | Admin | Create a staff account |
 | GET | `/api/users` | Admin | View all users |
 | PATCH | `/api/users/:id/status` | Admin | Activate or deactivate a user |
 
@@ -178,127 +216,104 @@ http://localhost:5000
 
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| POST | `/api/pets` | Admin / Staff | Add a new pet |
+| POST | `/api/pets` | Staff / Admin | Add a new pet |
 | GET | `/api/pets` | Public | View all pets |
-| GET | `/api/pets/:id` | Public | View a single pet |
-| PATCH | `/api/pets/:id` | Admin / Staff | Update pet details |
-| DELETE | `/api/pets/:id` | Admin / Staff | Delete a pet |
+| GET | `/api/pets/:id` | Public | View pet details |
+| PATCH | `/api/pets/:id` | Staff / Admin | Update a pet |
+| DELETE | `/api/pets/:id` | Staff / Admin | Remove a pet |
 
-### Pet Filtering and Search
+### Adoption Management
 
-Examples:
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/api/adoptions` | Adopter | Apply for adoption |
+| GET | `/api/adoptions/my` | Adopter | View own applications |
+| GET | `/api/adoptions` | Staff / Admin | View all applications |
+| PATCH | `/api/adoptions/:id/status` | Staff / Admin | Update application status |
+| PATCH | `/api/adoptions/:id/notes` | Staff / Admin | Add staff notes |
+| PATCH | `/api/adoptions/:id/complete` | Staff / Admin | Mark adoption as completed |
+| DELETE | `/api/adoptions/:id` | Adopter | Cancel an application |
 
-```text
-GET /api/pets?species=dog
-GET /api/pets?status=available
-GET /api/pets?species=cat&gender=female
-GET /api/pets?search=bruno
-GET /api/pets?search=labrador
-GET /api/pets?species=dog&status=available&search=labrador
-```
+### Appointments
 
-## Authentication Flow
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/api/appointments` | Adopter | Request a visit appointment |
+| GET | `/api/appointments/my` | Adopter | View own appointments |
+| GET | `/api/appointments` | Staff / Admin | View all appointments |
+| PATCH | `/api/appointments/:id/status` | Staff / Admin | Approve or reject appointment |
+| PATCH | `/api/appointments/:id/complete` | Staff / Admin | Mark appointment as completed |
+| PATCH | `/api/appointments/:id/cancel` | Adopter | Cancel own pending appointment |
+| DELETE | `/api/appointments/:id` | Staff / Admin | Remove completed appointment |
 
-```text
-Login
-  ↓
-Credentials verified
-  ↓
-JWT generated
-  ↓
-Client sends token in Authorization header
-  ↓
-Authentication middleware verifies token
-  ↓
-Logged-in user attached to req.user
-  ↓
-Role middleware checks permissions
-  ↓
-Protected controller executes
-```
+### Payments and Donations
 
-Protected API requests use:
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/api/payments/adoption/create-order` | Adopter | Create Razorpay adoption fee order |
+| POST | `/api/payments/adoption/verify` | Adopter | Verify adoption fee payment |
+| GET | `/api/payments/adoption/:adoptionId` | Adopter | View adoption payment status |
+| GET | `/api/payments/adoption/:adoptionId/staff` | Staff / Admin | View staff payment status |
+| POST | `/api/payments/donation/create-order` | Adopter | Create donation order |
+| POST | `/api/payments/donation/verify` | Adopter | Verify donation payment |
+| GET | `/api/payments/donation/my` | Adopter | View own donations |
+| GET | `/api/payments/donation` | Admin | View all successful donations |
 
-```text
-Authorization: Bearer <JWT_TOKEN>
-```
+### Complaints and Feedback
 
-## Current Development Status
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/api/complaints` | Adopter | Submit feedback or complaint |
+| GET | `/api/complaints/my` | Adopter | View own complaints |
+| GET | `/api/complaints` | Admin | View all complaints |
+| DELETE | `/api/complaints/:id` | Adopter | Delete own complaint |
+| DELETE | `/api/complaints/:id/admin` | Admin | Delete complaint |
 
-### Authentication & User Management
-- ✅ User model
-- ✅ Adopter registration
-- ✅ Login
-- ✅ JWT generation
-- ✅ Authentication middleware
-- ✅ Logged-in user profile
-- ✅ Role-based authorization
-- ✅ Admin creates Shelter Staff
-- ✅ Admin views users
-- ✅ Admin activates/deactivates users
-- ✅ API testing completed
+### Dashboard
 
-### Pet Management
-- ✅ Pet model
-- ✅ Add pet
-- ✅ View all pets
-- ✅ View single pet
-- ✅ Update pet
-- ✅ Delete pet
-- ✅ Filter/search pets
-- ✅ Staff/Admin route protection
-- ✅ CRUD API testing completed
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| GET | `/api/dashboard/admin` | Admin | View summary metrics and system stats |
 
-## API Testing
+## Frontend Routes
 
-Backend APIs have been tested using **Thunder Client**.
+The frontend application includes protected routes for each user type and role-specific dashboard pages:
 
-Testing includes:
+- `/` — Home
+- `/login` — Login
+- `/register` — Registration
+- `/pets` — Pet listing
+- `/pets/:id` — Pet details
+- `/profile` — User profile
+- `/donate` — Donation page
+- `/admin` — Admin dashboard
+- `/admin/users` — User management
+- `/admin/create-staff` — Staff creation
+- `/admin/complaints` — Complaint management
+- `/staff` — Staff dashboard
+- `/staff/pets` — Pet management
+- `/my-applications` — Adopter applications
+- `/manage-adoptions` — Adoption management
+- `/my-appointments` — Adopter appointments
+- `/manage-appointments` — Staff/admin appointments
+- `/my-complaints` — Adopter complaints
 
-- Successful and failed registration
-- Email format validation
-- Password validation
-- Duplicate account prevention
-- Login success/failure
-- JWT-protected routes
-- Role-based access checks
-- Staff account creation
-- User activation/deactivation
-- Full Pet CRUD operations
-- Pet filtering and search
+## Current Status
 
-## Database Models
+This project includes a working full-stack implementation with:
 
-Currently implemented:
+- secure user authentication and role management
+- pet CRUD operations
+- adoption lifecycle management
+- appointment handling
+- payment and donation workflows
+- admin dashboard metrics
+- frontend pages for adopter, staff, and admin roles
 
-- `User`
-- `Pet`
-
-Planned:
-
-- `Adoption`
-- `Appointment`
-- `Payment/Donation`
-
-## Review 1 Progress
-
-The current project includes:
-
-- Node.js + Express backend setup
-- MongoDB/Mongoose connection
-- User and Pet schemas/models
-- Authentication APIs
-- JWT authentication and authorization middleware
-- Full Pet Management CRUD APIs
-- Request validation and basic error handling
-- Thunder Client API testing
-- Database/schema planning
-- Major frontend page and backend API planning
-
-## Author
+## Project Contributors
 
 Developed as part of the ICTAK Full Stack Development with Gen AI project.
 
 ## License
 
-This project is currently intended for educational purposes.
+This project is intended for educational and portfolio purposes.
