@@ -26,6 +26,7 @@ import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import {
   ResponsiveContainer,
   BarChart,
@@ -349,6 +350,25 @@ const AdminDashboard = () => {
                   icon={<CurrencyRupeeIcon />}
                   backgroundColor="#E2F2ED"
                   iconColor="#2F7D6D"
+                />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  lg: 3,
+                }}
+              >
+                <StatCard
+                  title="Donations Collected"
+                  value={`₹${Number(
+                    stats.payments.donationsCollected || 0,
+                  ).toLocaleString("en-IN")}`}
+                  subtitle={`${stats.payments.successfulDonations || 0} successful donations`}
+                  icon={<VolunteerActivismIcon />}
+                  backgroundColor="#FDE8E4"
+                  iconColor="#F28C7A"
                 />
               </Grid>
             </Grid>
@@ -842,11 +862,11 @@ const AdminDashboard = () => {
                     mb: 1,
                   }}
                 >
-                  Manage Complaints
+                  Manage Feedback
                 </Typography>
 
                 <Typography variant="body2" color="text.secondary">
-                  Review adopter complaints, provide responses and resolve
+                  Review feedback, provide responses and resolve
                   reported issues.
                 </Typography>
               </CardContent>

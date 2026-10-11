@@ -29,6 +29,7 @@ const getAdminDashboardStats = async (req, res) => {
       Historical data:
       - completed adoptions
       - verified adoption fee payments
+      - verified donations
     */
     const [
       totalAdopters,
@@ -45,6 +46,7 @@ const getAdminDashboardStats = async (req, res) => {
       upcomingAppointments,
 
       paymentTotals,
+      donationTotals,
     ] = await Promise.all([
       // Users
       User.countDocuments({
@@ -127,6 +129,32 @@ const getAdminDashboardStats = async (req, res) => {
           },
         },
       ]),
+
+      /*
+        Historical verified donations.
+      */
+      Payment.aggregate([
+        {
+          $match: {
+            paymentType: "donation",
+            status: "paid",
+          },
+        },
+
+        {
+          $group: {
+            _id: null,
+
+            totalAmount: {
+              $sum: "$amount",
+            },
+
+            totalDonations: {
+              $sum: 1,
+            },
+          },
+        },
+      ]),
     ]);
 
     const adoptionFeesCollected =
@@ -137,6 +165,16 @@ const getAdminDashboardStats = async (req, res) => {
     const successfulPayments =
       paymentTotals.length > 0
         ? paymentTotals[0].totalPayments
+        : 0;
+
+    const donationsCollected =
+      donationTotals.length > 0
+        ? donationTotals[0].totalAmount
+        : 0;
+
+    const successfulDonations =
+      donationTotals.length > 0
+        ? donationTotals[0].totalDonations
         : 0;
 
     /*
@@ -209,6 +247,8 @@ const getAdminDashboardStats = async (req, res) => {
         payments: {
           adoptionFeesCollected,
           successfulPayments,
+          donationsCollected,
+          successfulDonations,
           currency: "INR",
         },
       },
