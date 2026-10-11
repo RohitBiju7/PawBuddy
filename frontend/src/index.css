@@ -1,16 +1,59 @@
-* {
+/* ========================================
+   PawBuddy — Global Styles
+======================================== */
+
+:root {
+  /* Brand colors */
+  --pb-primary: #2f7d6d;
+  --pb-primary-dark: #205d51;
+  --pb-mint: #a8d5c5;
+  --pb-coral: #f28c7a;
+
+  /* Surfaces */
+  --pb-background: #f7faf9;
+  --pb-surface: #ffffff;
+  --pb-border: #e3ebe7;
+
+  /* Text */
+  --pb-text: #223532;
+  --pb-text-muted: #60746d;
+
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   Reset
+======================================== */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--pb-background);
 }
+
+#root {
+  min-height: 100vh;
+}
+
+/* ========================================
+   Typography & Elements
+======================================== */
 
 button,
 input,
@@ -24,7 +67,51 @@ a {
   text-decoration: none;
 }
 
-img {
-  max-width: 100%;
+img,
+video {
   display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+/* ========================================
+   Accessibility
+======================================== */
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid rgba(47, 125, 109, 0.4);
+  outline-offset: 3px;
+}
+
+/* ========================================
+   Text Selection
+======================================== */
+
+::selection {
+  background-color: var(--pb-mint);
+  color: var(--pb-primary-dark);
+}
+
+/* ========================================
+   Scrollbar
+======================================== */
+
+html {
+  scrollbar-color: #c2d9d0 transparent;
+  scrollbar-width: thin;
+}
+
+/* ========================================
+   Reduced Motion
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
